@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { ArrowUp, Mic } from "lucide-react";
+import { ArrowUp, Loader2, Mic } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Message = {
@@ -261,8 +261,21 @@ export function ChatPanel({
             <div className="grid size-[36px] shrink-0 place-items-center rounded-full text-green-9">
               <Mic className="size-[18px]" />
             </div>
-            <div className="grid size-[36px] shrink-0 place-items-center rounded-full bg-green-9 text-white shadow-sm">
-              <ArrowUp className="size-[16px]" />
+            {/* While Covey is responding the send orb shows a disabled loading
+                state instead of the ready-to-send arrow. */}
+            <div
+              aria-disabled={showTyping}
+              className={`grid size-[36px] shrink-0 place-items-center rounded-full shadow-sm ${
+                showTyping
+                  ? "bg-neutral-200 text-text-light"
+                  : "bg-green-9 text-white"
+              }`}
+            >
+              {showTyping ? (
+                <Loader2 className="size-[16px] animate-spin" />
+              ) : (
+                <ArrowUp className="size-[16px]" />
+              )}
             </div>
           </div>
         </div>

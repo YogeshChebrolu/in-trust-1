@@ -37,10 +37,17 @@ const TOTAL = CHAT_LEN + TRAVEL_LEN + TAB_LEN * N_TABS;
 // The unified window: rail + chat + panel. Centered in fold one; slid left in
 // fold two so only the (now roomier) panel stays on screen, with the copy to
 // its right.
-const WIN_W = 1140;
+// Fold one keeps a centered window; fold two widens it by the 80px page margin
+// so the panel bleeds across the gutter and butts the section's left rule while
+// its right edge (and the copy beside it) stay put.
+const WIN_W1 = 1169;
+const WIN_W2 = 1249;
 const WIN_H = 620;
-const WIN_FOLD1 = { left: 68, top: 216 }; // top: with the headline shown
-const WIN_FOLD2 = { left: -526, top: 110 }; // top: after the headline clears
+// Coords are relative to the section's left rule (the clip bleeds to the gutter),
+// so padded content carries an explicit +80 offset.
+const GUTTER = 80;
+const WIN_FOLD1 = { left: 135, top: 216 }; // 55 + gutter — centered as before
+const WIN_FOLD2 = { left: -554, top: 110 }; // slid so the panel meets the left rule
 
 // Right-hand copy, in the same order as STEP_KEYS.
 const COPY = [
@@ -142,6 +149,7 @@ export function HeroExperience() {
   const slide = smoothstep(0.1, 0.9, travel);
   const winLeft = lerp(WIN_FOLD1.left, WIN_FOLD2.left, slide);
   const winTop = lerp(WIN_FOLD1.top, WIN_FOLD2.top, rise);
+  const winW = lerp(WIN_W1, WIN_W2, slide);
   const copyOpacity = smoothstep(0.55, 0.98, travel);
 
   return (
@@ -153,12 +161,17 @@ export function HeroExperience() {
           className="relative w-full"
           style={{ height: SCENE + TOTAL }}
         >
-          <div className="sticky top-0 overflow-hidden" style={{ height: SCENE }}>
+          {/* The clip bleeds across the left 80px gutter to the section rule, so
+              its origin sits at the rule; padded content offsets by GUTTER. */}
+          <div
+            className="sticky top-0 -ml-[80px] w-[calc(100%+80px)] overflow-hidden"
+            style={{ height: SCENE }}
+          >
             {/* Headline (hero) — centered on top, fades as the app takes over */}
             <div
               className="absolute flex flex-col items-center gap-[20px] px-[40px] text-center"
               style={{
-                left: 0,
+                left: GUTTER,
                 right: 0,
                 top: 28,
                 opacity: headlineOpacity,
@@ -184,7 +197,7 @@ export function HeroExperience() {
             <div
               className="absolute flex flex-col justify-center px-[24px]"
               style={{
-                left: 646,
+                left: 646 + GUTTER,
                 top: 0,
                 width: 606,
                 height: SCENE,
@@ -220,7 +233,7 @@ export function HeroExperience() {
             {/* The unified app window — one border/shadow around rail + chat + panel */}
             <div
               className="absolute overflow-hidden rounded-[16px] border border-border-light bg-bg-surface shadow-[0px_2px_6px_-2px_rgba(0,0,0,0.04),0px_18px_50px_-24px_rgba(0,0,0,0.12)]"
-              style={{ left: winLeft, top: winTop, width: WIN_W, height: WIN_H }}
+              style={{ left: winLeft, top: winTop, width: winW, height: WIN_H }}
             >
               <div className="flex h-full w-full">
                 {/* Slim rail */}
