@@ -1,26 +1,80 @@
 "use client";
 
 import Image from "next/image";
+import { History, SquarePen } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { CoveyButton } from "./covey-button";
 import { ChatPanel } from "./chat-panel";
+import { DemoPanel, panelTabKeys, PROFILE_KEY } from "./advisor/demo-panel";
+import { PANEL_EVENTS, DEMO_PROFILE } from "@/lib/demo-panel";
 
 /* ------------------------------------------------------------------ *
- * A single pinned scene. One panel travels from the hero (right, live
- * chat) across to fold two (left, product screens) while the headline
- * fades out and the tab walkthrough fades in on the right.
+ * A single pinned scene showing one continuous advisor app.
+ *
+ *  Fold one — the whole app, centered: a slim rail, the live chat, and
+ *  the tabbed panel share one window. The chat plays as you scroll and
+ *  the Profile fills in step with it; the artifact tabs appear only once
+ *  the chat has produced them.
+ *  Transition — the entire window slides LEFT, so the rail + chat leave
+ *  off the left edge and the panel is what remains; marketing copy fades
+ *  in on the RIGHT.
+ *  Fold two — the panel sits on the left; its tab bar steps through
+ *  Shortlist → the three policies → Compare → Premiums as you scroll,
+ *  with the right-hand copy changing to match.
  * ------------------------------------------------------------------ */
 
-const SCENE = 820;
+const SCENE = 860;
 const CHAT_LEN = 1700; // scroll spent playing the conversation
-const TRAVEL_LEN = 680; // scroll spent moving the panel up-and-left
-const TAB_LEN = 460; // scroll spent on each product tab
-const N_TABS = 3;
+const TRAVEL_LEN = 700; // scroll spent sliding the window left
+const TAB_LEN = 380; // scroll spent on each panel tab
+
+// The panel's scroll-driven tabs (Profile is pinned; the rest step on scroll).
+const TAB_KEYS = panelTabKeys(PANEL_EVENTS);
+const STEP_KEYS = TAB_KEYS.slice(1); // Shortlist · Activ One · Optima · Aspire · Compare · Premiums
+const N_TABS = STEP_KEYS.length;
 const TOTAL = CHAT_LEN + TRAVEL_LEN + TAB_LEN * N_TABS;
 
-/** Panel starts full-width along the bottom, then shrinks to the left. */
-const BOTTOM_BOX = { left: 0, top: 352, width: 1276, height: 448 };
-const LEFT_BOX = { left: -48, top: 86, width: 748, height: 648 };
+// The unified window: rail + chat + panel. Centered in fold one; slid left in
+// fold two so only the (now roomier) panel stays on screen, with the copy to
+// its right.
+const WIN_W = 1140;
+const WIN_H = 620;
+const WIN_FOLD1 = { left: 68, top: 216 }; // top: with the headline shown
+const WIN_FOLD2 = { left: -526, top: 110 }; // top: after the headline clears
+
+// Right-hand copy, in the same order as STEP_KEYS.
+const COPY = [
+  {
+    eyebrow: "The shortlist",
+    title: "Every plan, ranked for you.",
+    body: "We deep-verify flagship policies from every major insurer against each CIS, prospectus and rate chart — then rank what actually fits your family, and show exactly what got cut and why.",
+  },
+  {
+    eyebrow: "Plan clarity · Activ One",
+    title: "Activ One, in plain English.",
+    body: "Earn up to 100% of your premium back for staying active, with day-1 chronic care — but a 3-year pre-existing wait unless you add the buy-down. Every strength and every trade-off, spelled out.",
+  },
+  {
+    eyebrow: "Plan clarity · Optima Restore",
+    title: "Optima Restore, honestly.",
+    body: "Cover that grows every year and restores in full after a claim, room rent at actuals, maternity included — offset by a flat 36-month pre-existing wait and a ₹2,000 ambulance cap.",
+  },
+  {
+    eyebrow: "Plan clarity · Aspire",
+    title: "Aspire, no surprises.",
+    body: "A no-claim bonus up to 10× your cover and unlimited restoration at the lowest premium of the three — as long as you respect the room-rent limit, which otherwise dents the whole bill.",
+  },
+  {
+    eyebrow: "Side by side",
+    title: "Compare on what actually matters.",
+    body: "Line up your shortlist on the dimensions that decide a claim — waiting periods, room rent, co-pay, restoration and settlement record — not the glossy brochure highlights.",
+  },
+  {
+    eyebrow: "Real cost",
+    title: "See the true cost, across the years.",
+    body: "What each plan costs today and how the premium climbs as you age, side by side — so you choose on lifetime value, not just the tempting first-year price.",
+  },
+];
 
 const STATS = [
   { value: "3x", label: "Faster decision making", width: "w-[148px]" },
@@ -28,32 +82,6 @@ const STATS = [
   { value: "100", label: "Policy transparency", width: "w-[137px]" },
   { value: "24×7", label: "AI assistance", width: "w-[82px]" },
   { value: "Minutes", label: "Instead of days", width: "w-[97px]" },
-];
-
-type Slide = { tab: string; img: string; eyebrow: string; title: string; body: string };
-
-const SLIDES: Slide[] = [
-  {
-    tab: "Shortlist",
-    img: "/assets/screen-shortlist.png",
-    eyebrow: "The shortlist",
-    title: "Every plan, ranked for you.",
-    body: "We deep-verify flagship policies from every major insurer against each CIS, prospectus, and rate chart — then rank what actually fits your family, and show you exactly what got cut and why.",
-  },
-  {
-    tab: "Activ One",
-    img: "/assets/screen-activ.png",
-    eyebrow: "Plan clarity",
-    title: "Understand any plan in plain English.",
-    body: "Open any policy and see it split into what you get and what you give up — waiting periods, room-rent caps, loadings and all — so nothing important stays buried in the fine print.",
-  },
-  {
-    tab: "Premiums",
-    img: "/assets/screen-premiums.png",
-    eyebrow: "Real cost",
-    title: "See the true cost, across the years.",
-    body: "Compare what each plan costs today and how the premium climbs as you age, side by side — so you choose on lifetime value, not just the tempting first-year price.",
-  },
 ];
 
 const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
@@ -92,178 +120,148 @@ export function HeroExperience() {
   // Derived scene state.
   const chatProgress = clamp(scrolled / CHAT_LEN, 0, 1);
   const travel = clamp((scrolled - CHAT_LEN) / TRAVEL_LEN, 0, 1);
+  const chatDone = scrolled >= CHAT_LEN;
+  const inFold2 = scrolled >= CHAT_LEN + TRAVEL_LEN;
   const tabIndex = clamp(
     Math.floor((scrolled - CHAT_LEN - TRAVEL_LEN) / TAB_LEN),
     0,
     N_TABS - 1,
   );
-  const slide = SLIDES[tabIndex];
 
-  // Sequenced so the steps never overlap into a washed-out middle state:
-  // 1) headline fades out while the panel is still parked at the bottom,
-  // 2) the panel moves up-and-left while the chat crossfades to the product,
-  // 3) the right-side text fades in last.
-  const headlineOpacity = 1 - smoothstep(0, 0.24, travel);
-  // The panel moves steadily through the crossfade so the card is visibly
-  // morphing while the chat swaps to the product — no empty middle frame.
-  const move = smoothstep(0.22, 0.82, travel);
-  const box = {
-    left: lerp(BOTTOM_BOX.left, LEFT_BOX.left, move),
-    top: lerp(BOTTOM_BOX.top, LEFT_BOX.top, move),
-    width: lerp(BOTTOM_BOX.width, LEFT_BOX.width, move),
-    height: lerp(BOTTOM_BOX.height, LEFT_BOX.height, move),
-  };
+  // The panel shows the ranked tabs only after the chat has produced them; the
+  // active tab is Profile through fold one, then steps on scroll in fold two.
+  const panelEvents = chatDone ? PANEL_EVENTS : [];
+  const activeKey = inFold2 ? STEP_KEYS[tabIndex] : PROFILE_KEY;
+  const copy = inFold2 ? COPY[tabIndex] : COPY[0];
 
-  const chatOpacity = 1 - smoothstep(0.3, 0.56, travel);
-  const productOpacity = smoothstep(0.36, 0.64, travel);
-  const textOpacity = smoothstep(0.72, 1, travel);
+  // The headline + button clear within the first bit of scroll, and the window
+  // rises to fill the space. It then slides left during the transition while the
+  // right-hand copy fades in.
+  const rise = smoothstep(0.02, 0.16, chatProgress);
+  const headlineOpacity = 1 - rise;
+  const slide = smoothstep(0.1, 0.9, travel);
+  const winLeft = lerp(WIN_FOLD1.left, WIN_FOLD2.left, slide);
+  const winTop = lerp(WIN_FOLD1.top, WIN_FOLD2.top, rise);
+  const copyOpacity = smoothstep(0.55, 0.98, travel);
 
   return (
     <section className="-mb-px w-full border border-rule px-[80px]">
-      <div className="w-full border-x border-rule">
-        {/* Tall track — the scene pins while the panel travels and tabs step. */}
+      <div className="w-full">
+        {/* Tall track — the scene pins while the chat plays and the tabs step. */}
         <div
           ref={trackRef}
           className="relative w-full"
           style={{ height: SCENE + TOTAL }}
         >
-          <div
-            className="sticky top-0 overflow-hidden"
-            style={{ height: SCENE }}
-          >
-            {/* Headline (hero) — centered on top, fades as the panel leaves */}
+          <div className="sticky top-0 overflow-hidden" style={{ height: SCENE }}>
+            {/* Headline (hero) — centered on top, fades as the app takes over */}
             <div
-              className="absolute flex flex-col items-center gap-[24px] px-[40px] text-center"
+              className="absolute flex flex-col items-center gap-[20px] px-[40px] text-center"
               style={{
                 left: 0,
                 right: 0,
-                top: 48,
+                top: 28,
                 opacity: headlineOpacity,
                 transform: `translateY(${-24 * (1 - headlineOpacity)}px)`,
                 pointerEvents: headlineOpacity < 0.5 ? "none" : "auto",
               }}
             >
-              <div className="flex flex-col items-center gap-[18px]">
-                <h1
-                  className="max-w-[820px] bg-clip-text text-[54px] leading-[1.12] font-medium tracking-[-1.08px] text-transparent"
-                  style={{
-                    backgroundImage:
-                      "linear-gradient(139.5deg, #333333 3.47%, #000000 94.75%)",
-                  }}
-                >
-                  Find the right insurance in{" "}
-                  <span className="text-[#0f6642]">10 minutes</span>.{" "}
-                  <span className="line-through decoration-solid">
-                    Not 10 days.
-                  </span>
-                </h1>
-                <p className="max-w-[560px] text-[19px] leading-[1.5] font-medium tracking-[-0.38px] text-[rgba(0,0,0,0.5)]">
-                  Buying insurance shouldn&apos;t mean endless calls, confusing
-                  jargon, or pressure from sales agents.
-                </p>
-              </div>
-              <div className="flex flex-col items-center gap-[8px]">
-                <CoveyButton>Try Covey</CoveyButton>
-                <p className="text-[14px] font-medium tracking-[-0.28px] whitespace-nowrap text-neutral-400">
-                  Free to try · No phone number required · No spam. Ever.
-                </p>
-              </div>
+              <h1
+                className="max-w-[820px] bg-clip-text text-[46px] leading-[1.12] font-medium tracking-[-0.92px] text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(139.5deg, #333333 3.47%, #000000 94.75%)",
+                }}
+              >
+                Find the right insurance in{" "}
+                <span className="text-[#0f6642]">10 minutes</span>.{" "}
+                <span className="line-through decoration-solid">Not 10 days.</span>
+              </h1>
+              <CoveyButton>Try Covey</CoveyButton>
             </div>
 
-            {/* Tab walkthrough (fold two) — fades in on the right */}
+            {/* Fold-two copy — fades in on the right as the window leaves left */}
             <div
-              className="absolute flex flex-col justify-center border-l border-rule px-[56px]"
+              className="absolute flex flex-col justify-center px-[24px]"
               style={{
-                left: 748,
+                left: 646,
                 top: 0,
-                right: 0,
+                width: 606,
                 height: SCENE,
-                opacity: textOpacity,
-                pointerEvents: textOpacity < 0.5 ? "none" : "auto",
+                opacity: copyOpacity,
+                pointerEvents: copyOpacity < 0.5 ? "none" : "auto",
               }}
             >
-              <div className="flex items-center gap-[8px]">
-                {SLIDES.map((s, i) => (
-                  <span
-                    key={s.tab}
-                    className={`rounded-full px-[12px] py-[5px] text-[13px] font-medium transition-colors duration-300 ${
-                      i === tabIndex
-                        ? "bg-green-2 text-green-12"
-                        : "bg-[#f3f4f6] text-neutral-400"
-                    }`}
-                  >
-                    {s.tab}
-                  </span>
-                ))}
-              </div>
-
-              <div key={tabIndex} className="mt-[28px] animate-[fadeInUp_450ms_ease-out]">
+              <div key={activeKey} className="animate-[fadeInUp_450ms_ease-out]">
                 <p className="text-[14px] font-semibold tracking-[0.4px] text-green-9 uppercase">
-                  {slide.eyebrow}
+                  {copy.eyebrow}
                 </p>
-                <h2 className="mt-[12px] text-[38px] leading-[1.1] font-medium tracking-[-0.76px] text-black">
-                  {slide.title}
+                <h2 className="mt-[12px] max-w-[540px] text-[40px] leading-[1.1] font-medium tracking-[-0.8px] text-black">
+                  {copy.title}
                 </h2>
-                <p className="mt-[18px] max-w-[400px] text-[18px] leading-[1.6] font-normal tracking-[-0.36px] text-[rgba(0,0,0,0.55)]">
-                  {slide.body}
+                <p className="mt-[18px] max-w-[480px] text-[18px] leading-[1.6] font-normal tracking-[-0.36px] text-[rgba(0,0,0,0.55)]">
+                  {copy.body}
                 </p>
               </div>
-
               <div className="mt-[36px] flex items-center gap-[10px]">
-                {SLIDES.map((s, i) => (
+                {STEP_KEYS.map((key, i) => (
                   <span
-                    key={s.tab}
+                    key={key}
                     className={`h-[3px] rounded-full transition-all duration-300 ${
-                      i === tabIndex ? "w-[40px] bg-green-9" : "w-[20px] bg-[#e5e7eb]"
+                      inFold2 && i === tabIndex
+                        ? "w-[40px] bg-green-9"
+                        : "w-[20px] bg-[#e5e7eb]"
                     }`}
                   />
                 ))}
               </div>
             </div>
 
-            {/* The traveling panel */}
-            <div className="absolute" style={{ ...box }}>
-              {/* Product screens (fold two) */}
-              <div
-                className="absolute inset-0 overflow-hidden rounded-[14px] bg-[#eef1f0]"
-                style={{ opacity: productOpacity }}
-              >
-                {SLIDES.map((s, i) => (
-                  <div
-                    key={s.tab}
-                    className={`absolute inset-0 transition-opacity duration-500 ease-out ${
-                      i === tabIndex ? "opacity-100" : "opacity-0"
-                    }`}
-                  >
-                    <div className="absolute top-1/2 right-[-1px] h-[88%] -translate-y-1/2">
-                      <Image
-                        src={s.img}
-                        alt={`${s.tab} screen`}
-                        width={1320}
-                        height={940}
-                        className="h-full w-auto max-w-none rounded-l-[14px] border border-r-0 border-[#e5e7eb] shadow-[0px_30px_60px_-20px_rgba(0,0,0,0.25)]"
-                        priority={i === 0}
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
+            {/* The unified app window — one border/shadow around rail + chat + panel */}
+            <div
+              className="absolute overflow-hidden rounded-[16px] border border-border-light bg-bg-surface shadow-[0px_2px_6px_-2px_rgba(0,0,0,0.04),0px_18px_50px_-24px_rgba(0,0,0,0.12)]"
+              style={{ left: winLeft, top: winTop, width: WIN_W, height: WIN_H }}
+            >
+              <div className="flex h-full w-full">
+                {/* Slim rail */}
+                <div className="flex w-[46px] shrink-0 flex-col items-center gap-[18px] border-r border-border-light bg-bg-page py-[16px]">
+                  <Image
+                    src="/assets/logo-small.svg"
+                    alt=""
+                    width={14}
+                    height={16}
+                    className="h-[16px] w-auto"
+                  />
+                  <span className="grid size-[26px] place-items-center rounded-full bg-green-9 text-white">
+                    <SquarePen className="size-[13px]" />
+                  </span>
+                  <History className="size-[16px] text-text-light" />
+                  <span className="mt-auto grid size-[26px] place-items-center rounded-full bg-neutral-200 text-[11px] font-semibold text-text-muted">
+                    T
+                  </span>
+                </div>
 
-              {/* Live chat (hero) — fills the full-width panel, fades as it leaves */}
-              <div
-                className="absolute inset-0"
-                style={{
-                  opacity: chatOpacity,
-                  pointerEvents: chatOpacity < 0.5 ? "none" : "auto",
-                }}
-              >
-                <ChatPanel scrollProgress={chatProgress} wide />
+                {/* Chat column */}
+                <div className="h-full w-[508px] shrink-0 border-r border-border-light">
+                  <ChatPanel scrollProgress={chatProgress} wide embedded />
+                </div>
+
+                {/* Tabbed artifact panel */}
+                <div className="h-full min-w-0 flex-1">
+                  <DemoPanel
+                    events={panelEvents}
+                    profile={DEMO_PROFILE}
+                    activeKey={activeKey}
+                    progress={chatProgress}
+                    embedded
+                  />
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Stats strip — now after the whole experience */}
+        {/* Stats strip — after the whole experience */}
         <div className="flex w-full items-center overflow-hidden border-t border-rule px-[40px] py-[48px]">
           <div className="flex flex-1 items-center justify-center border-t border-b border-l border-[#d6dade] py-px">
             {STATS.map((stat) => (
