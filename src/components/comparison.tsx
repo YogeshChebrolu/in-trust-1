@@ -48,7 +48,7 @@ const CELL =
 export function Comparison() {
   return (
     <section className="-mb-px w-full border border-rule px-[80px]">
-      <div className="w-full border-x border-rule">
+      <div className="w-full">
         <div className="flex w-full items-start px-[40px] py-[80px]">
           <div className="flex flex-1 flex-col items-center gap-[64px]">
             <h2 className="w-[756px] text-center text-[44px] leading-normal font-medium tracking-[-0.88px] text-black">

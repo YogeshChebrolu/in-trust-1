@@ -35,7 +35,7 @@ function Step({ index }: { index: number }) {
 export function Process() {
   return (
     <section className="-mb-px w-full border border-rule px-[80px]">
-      <div className="relative w-full overflow-hidden border-x border-rule bg-[linear-gradient(180deg,#010501_0%,#00190d_70.236%,#069851_100%)]">
+      <div className="relative w-full overflow-hidden bg-[linear-gradient(180deg,#010501_0%,#00190d_70.236%,#069851_100%)]">
         {/* Grain texture */}
         <div
           aria-hidden

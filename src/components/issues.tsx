@@ -398,7 +398,7 @@ export function Issues() {
 
   return (
     <section className="-mb-px w-full border border-rule px-[80px]">
-      <div className="w-full border-x border-rule">
+      <div className="w-full">
         {/* Tall track: the section stays pinned for as long as the rail needs to travel. */}
         <div
           ref={trackRef}

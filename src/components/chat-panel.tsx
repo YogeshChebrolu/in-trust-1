@@ -1,6 +1,7 @@
 "use client";
 
 import Image from "next/image";
+import { ArrowUp, Mic } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 
 type Message = {
@@ -10,49 +11,49 @@ type Message = {
 };
 
 const SCRIPT: Message[] = [
-  { from: "user", lines: ["Health cover for my family"] },
+  { from: "user", lines: ["I'm looking for health insurance for my family"] },
   {
     from: "covey",
     lines: [
-      "Hey! Happy to help you find the right health cover for your family. 🙏",
-      "Let me ask a few quick things so I can look up the right options",
+      "Glad to help you find the right health cover. 🙏",
+      "Let me ask a few quick things so I can look up the best options.",
     ],
   },
   { from: "covey", lines: ["Who should the policy cover?"] },
-  { from: "user", lines: ["Me, my wife and our 2 year old"] },
+  { from: "user", lines: ["Two adults and our 15-year-old son"] },
   {
     from: "covey",
     lines: [
-      "Got it. Any existing conditions I should factor in — diabetes, BP, anything ongoing?",
+      "Got it. Any existing conditions I should factor in — diabetes, BP, past surgeries, anything ongoing?",
     ],
   },
-  { from: "user", lines: ["My wife has thyroid. Nothing else."] },
+  { from: "user", lines: ["My wife had knee surgery a couple of years ago. Otherwise all healthy."] },
   {
     from: "covey",
     lines: [
-      "Thanks — thyroid usually means a waiting period, not a rejection. Good to know upfront.",
-      "What feels like a comfortable premium per year?",
+      "Thanks — a past knee surgery usually means a short waiting period, not a rejection. Good to know upfront.",
+      "Which city are you in, and what yearly premium feels comfortable?",
     ],
   },
-  { from: "user", lines: ["Around ₹25,000"] },
+  { from: "user", lines: ["Bengaluru. Around ₹35,000 a year."] },
   {
     from: "covey",
     lines: [
-      "Found 3 plans: ₹10L cover, no copay, and thyroid covered after 24 months.",
-      "Want me to compare them side by side?",
+      "Got it — Bengaluru is a metro zone, so I'll factor that in and target ₹10L cover with no copay.",
+      "Shortlisting from every major insurer now…",
     ],
   },
-  { from: "user", lines: ["Yes, please"] },
+  { from: "user", lines: ["Sounds good, go ahead"] },
   {
     from: "covey",
     lines: [
-      "Here they are — compared on what actually matters: waiting period, room rent, and claim settlement rate.",
-      "No jargon, no sales calls. Take your time.",
+      "Done — 10 verified plans narrowed to a shortlist of 3.",
+      "Everything's on the right — your profile, the shortlist, each plan in plain English, a comparison and premiums. No jargon, no sales calls.",
     ],
   },
   {
     from: "user",
-    lines: ["Found the right one for my family. Thank you! 🙏"],
+    lines: ["This is exactly what I needed. Thank you! 🙏"],
   },
 ];
 
@@ -62,7 +63,9 @@ const AFTER_USER_MS = 700;
 const AFTER_COVEY_MS = 1400;
 const RESTART_MS = 5000;
 
-function CoveyLabel() {
+// The advisor's byline — a spark mark + name, matching the product's
+// reading-surface chat (an assistant turn is headed, not bubbled).
+function AdvisorLabel({ responding }: { responding?: boolean }) {
   return (
     <div className="flex w-full items-center gap-[6px]">
       <Image
@@ -72,29 +75,32 @@ function CoveyLabel() {
         height={13}
         className="h-[13px] w-[11.44px]"
       />
-      <span className="font-plex text-[12px] leading-[18px] font-medium text-[#344054]">
-        Covey
-      </span>
+      {responding ? (
+        <span className="animate-pulse text-[12px] leading-[18px] font-medium text-green-9">
+          Responding…
+        </span>
+      ) : (
+        <span className="text-[12px] leading-[18px] font-medium text-text-muted">
+          Covey
+        </span>
+      )}
     </div>
   );
 }
 
+// The "Covey is replying" beat before an assistant turn lands.
 function TypingBubble() {
   return (
-    <div className="flex w-full items-start">
-      <div className="flex w-[378px] max-w-[720px] flex-col gap-[6px]">
-        <CoveyLabel />
-        <div className="flex w-full flex-col pl-[16px]">
-          <div className="flex w-fit items-center gap-[4px] rounded-tr-[8px] rounded-br-[8px] rounded-bl-[8px] border border-[#eaecf0] bg-[#f9fafb] px-[14px] py-[14px]">
-            {[0, 1, 2].map((i) => (
-              <span
-                key={i}
-                className="size-[6px] animate-bounce rounded-full bg-[#98a2b3]"
-                style={{ animationDelay: `${i * 150}ms` }}
-              />
-            ))}
-          </div>
-        </div>
+    <div className="flex w-full flex-col gap-[8px]">
+      <AdvisorLabel responding />
+      <div className="flex items-center gap-[4px] pl-[2px]">
+        {[0, 1, 2].map((i) => (
+          <span
+            key={i}
+            className="size-[6px] animate-bounce rounded-full bg-primary-light"
+            style={{ animationDelay: `${i * 150}ms` }}
+          />
+        ))}
       </div>
     </div>
   );
@@ -109,38 +115,35 @@ function Bubble({
   showLabel: boolean;
   wide?: boolean;
 }) {
+  // User turn — a soft light-green bubble, right-aligned (product parity).
   if (message.from === "user") {
     return (
       <div className="flex w-full justify-end">
-        <div className={`flex justify-end ${wide ? "max-w-[46%]" : "max-w-[355px]"}`}>
-          <div className="flex w-full items-center rounded-tl-[8px] rounded-br-[8px] rounded-bl-[8px] bg-green-9 px-[14px] py-[10px]">
-            <p className="text-[14px] leading-[20px] text-white">
-              {message.lines[0]}
-            </p>
-          </div>
+        <div
+          className={`rounded-xl bg-primary-50 px-[16px] py-[10px] ${
+            wide ? "max-w-[70%]" : "max-w-[85%]"
+          }`}
+        >
+          <p className="text-[14px] leading-[20px] text-text-dark">
+            {message.lines[0]}
+          </p>
         </div>
       </div>
     );
   }
 
+  // Assistant turn — a headed reading surface, no bubble.
   return (
-    <div className="flex w-full items-start">
-      <div className={`flex flex-col gap-[6px] ${wide ? "w-[46%]" : "w-[378px] max-w-[720px]"}`}>
-        {showLabel && <CoveyLabel />}
-        <div className="flex w-full flex-col pl-[16px]">
-          <div className="w-full rounded-tr-[8px] rounded-br-[8px] rounded-bl-[8px] border border-[#eaecf0] bg-[#f9fafb] px-[14px] py-[10px] text-[14px] text-[#101828]">
-            {message.lines.map((line, i) => (
-              <p
-                key={line}
-                className={`leading-[20px] ${
-                  i < message.lines.length - 1 ? "mb-[14px]" : ""
-                }`}
-              >
-                {line}
-              </p>
-            ))}
-          </div>
-        </div>
+    <div className="flex w-full flex-col gap-[6px]">
+      {showLabel && <AdvisorLabel />}
+      <div
+        className={`flex flex-col gap-[10px] text-[14px] leading-[20px] text-text-dark ${
+          wide ? "max-w-[80%]" : ""
+        }`}
+      >
+        {message.lines.map((line) => (
+          <p key={line}>{line}</p>
+        ))}
       </div>
     </div>
   );
@@ -149,9 +152,12 @@ function Bubble({
 export function ChatPanel({
   scrollProgress,
   wide,
+  embedded,
 }: {
   scrollProgress?: number;
   wide?: boolean;
+  /** Render bare (no outer card) so it can sit inside the unified app window. */
+  embedded?: boolean;
 }) {
   // When scrollProgress is provided the conversation is driven by page scroll;
   // otherwise it auto-plays on a timer and loops.
@@ -200,7 +206,8 @@ export function ChatPanel({
   let showTyping = typing;
   if (!auto) {
     const t = Math.min(Math.max(scrollProgress, 0), 1) * SCRIPT.length;
-    shownCount = Math.min(SCRIPT.length, Math.floor(t));
+    // Always keep the opening message on screen so the chat never reads blank.
+    shownCount = Math.min(SCRIPT.length, Math.max(1, Math.floor(t)));
     const frac = t - shownCount;
     const nextIsCovey =
       shownCount < SCRIPT.length && SCRIPT[shownCount].from === "covey";
@@ -215,8 +222,12 @@ export function ChatPanel({
   const visible = SCRIPT.slice(0, shownCount);
 
   return (
-    <div className="flex h-full w-full flex-col items-center gap-[26px] overflow-hidden rounded-[14px] border border-[#e5e7eb] bg-white px-[14px] py-[24px]">
-      <div className={`flex w-full flex-1 flex-col justify-between overflow-hidden ${wide ? "px-[48px]" : "px-[24px]"}`}>
+    <div
+      className={`flex h-full w-full flex-col items-center gap-[26px] overflow-hidden bg-white px-[14px] py-[24px] ${
+        embedded ? "" : "rounded-[14px] border border-[#e5e7eb]"
+      }`}
+    >
+      <div className={`flex w-full flex-1 flex-col justify-between overflow-hidden ${wide ? "px-[40px]" : "px-[24px]"}`}>
         <div
           ref={scrollRef}
           className="no-scrollbar flex flex-1 flex-col gap-[16px] overflow-y-auto pt-[8px]"
@@ -240,28 +251,18 @@ export function ChatPanel({
           )}
         </div>
 
-        {/* Prompt input */}
-        <div className="flex w-full flex-col gap-[24px] pt-[24px]">
-          <div className="flex w-full flex-col rounded-[6px] border border-[#e6e5e5] bg-white p-[12px]">
-            <div className="flex w-full items-start p-[8px]">
-              <p className="font-inter flex-1 text-[15px] leading-[24px] tracking-[-0.3px] text-[#7b7b7b]">
-                Describe your task — AI handles the tools.
-              </p>
+        {/* Composer — mirrors the product's chat input: a read-surface card
+            holding the prompt, a mic, and the teal send orb. */}
+        <div className="flex w-full flex-col pt-[24px]">
+          <div className="flex w-full items-end gap-[8px] rounded-xl border border-border-light bg-white p-[8px] shadow-sm">
+            <p className="flex-1 px-[8px] py-[6px] text-[15px] leading-[24px] tracking-[-0.3px] text-text-muted">
+              Ask anything about your insurance…
+            </p>
+            <div className="grid size-[36px] shrink-0 place-items-center rounded-full text-green-9">
+              <Mic className="size-[18px]" />
             </div>
-            <div className="flex w-full items-center justify-end">
-              <div className="relative flex size-[34.286px] items-center justify-center rounded-[8.571px] bg-green-9 shadow-[0px_1.714px_3.429px_-0.857px_rgba(13,13,13,0.5),0px_0px_0px_0.857px_black]">
-                <Image
-                  src="/assets/arrow-top.svg"
-                  alt="Send"
-                  width={17}
-                  height={17}
-                  className="size-[17.143px]"
-                />
-                <span
-                  aria-hidden
-                  className="pointer-events-none absolute inset-0 rounded-[8.571px] shadow-[inset_0px_0.429px_0.857px_0px_rgba(255,255,255,0.15),inset_0px_-0.857px_1.029px_0.3px_black]"
-                />
-              </div>
+            <div className="grid size-[36px] shrink-0 place-items-center rounded-full bg-green-9 text-white shadow-sm">
+              <ArrowUp className="size-[16px]" />
             </div>
           </div>
         </div>

@@ -17,6 +17,29 @@
 
   --color-rule: #d1d1d1;
 
+  /* --- Advisor artifact tokens (ported from the product app) --------------- */
+  --color-primary-25: #f3f8f6;
+  --color-primary-50: #e6f0ec;
+  --color-primary-100: #c2dcd1;
+  --color-primary-700: #0a5136;
+  --color-primary-800: #06402b;
+  --color-primary-light: #52b788;
+  --color-primary-dark: #06402b;
+
+  --color-text-dark: #1a1a1a;
+  --color-text-regular: #333333;
+  --color-text-muted: #666666;
+  --color-text-light: #999999;
+
+  --color-bg-page: #f8f8f8;
+  --color-bg-surface: #ffffff;
+  --color-bg-secondary: #f5f5f5;
+
+  --color-border-light: #e0e0e0;
+  --color-secondary: #f5f5f5;
+  --color-sidebar-accent: #e6f0ec;
+  --color-destructive: #b42318;
+
   --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
   --font-plex: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
@@ -33,6 +56,14 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Raw custom properties referenced directly inside artifact SVGs
+   (premium-explorer chart grid/axis/markers). */
+:root {
+  --border-light: #e0e0e0;
+  --text-light: #999999;
+  --bg-surface: #ffffff;
 }
 
 .no-scrollbar {
