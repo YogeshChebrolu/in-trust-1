@@ -83,13 +83,14 @@ const COPY = [
   },
 ];
 
-const STATS = [
-  { value: "3x", label: "Faster decision making", width: "w-[148px]" },
-  { value: "1 Conversation", label: "instead of 5 calls", width: "w-[171px]" },
-  { value: "100", label: "Policy transparency", width: "w-[137px]" },
-  { value: "24×7", label: "AI assistance", width: "w-[82px]" },
-  { value: "Minutes", label: "Instead of days", width: "w-[97px]" },
-];
+// Stats strip hidden for now.
+// const STATS = [
+//   { value: "3x", label: "Faster decision making", width: "w-[148px]" },
+//   { value: "1 Conversation", label: "instead of 5 calls", width: "w-[171px]" },
+//   { value: "100", label: "Policy transparency", width: "w-[137px]" },
+//   { value: "24×7", label: "AI assistance", width: "w-[82px]" },
+//   { value: "Minutes", label: "Instead of days", width: "w-[97px]" },
+// ];
 
 const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
@@ -273,32 +274,7 @@ export function HeroExperience() {
             </div>
           </div>
         </div>
-
-        {/* Stats strip — after the whole experience */}
-        <div className="flex w-full items-center overflow-hidden border-t border-rule px-[40px] py-[48px]">
-          <div className="flex flex-1 items-center justify-center border-t border-b border-l border-[#d6dade] py-px">
-            {STATS.map((stat) => (
-              <div
-                key={stat.value}
-                className="relative h-[87.555px] min-w-0 flex-1 border-r border-[#d6dade] bg-[#f5f5f5] first:border-l"
-              >
-                <div
-                  className={`absolute top-[19.25px] left-[35.28px] flex flex-col gap-[8px] ${stat.width}`}
-                >
-                  <p
-                    className="font-display w-full text-[28.219px] leading-[32.169px] font-normal tracking-[-1.4109px] whitespace-nowrap text-black"
-                    style={{ fontVariationSettings: '"opsz" 14, "wdth" 100' }}
-                  >
-                    {stat.value}
-                  </p>
-                  <p className="w-full text-[12px] leading-normal font-normal tracking-[-0.28px] whitespace-nowrap text-[#6b6a6a] uppercase">
-                    {stat.label}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+        {/* Stats strip hidden for now. */}
       </div>
     </section>
   );
