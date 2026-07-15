@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "jetro": {
+      "type": "stdio",
+      "command": "C:\\Users\\natha\\.jetro\\runtime\\node-win32-x64.exe",
+      "args": [
+        "C:\\Users\\natha\\.jetro\\mcp-server\\index.js"
+      ],
+      "env": {
+        "JET_WORKSPACE": "c:\\Users\\natha\\Downloads\\in-trust",
+        "JET_API_URL": "https://api.jetro.ai",
+        "PATH": "C:\\Users\\natha\\.jetro\\runtime;C:\\Python310\\Scripts\\;C:\\Python310\\;C:\\windows\\system32;C:\\windows;C:\\windows\\System32\\Wbem;C:\\windows\\System32\\WindowsPowerShell\\v1.0\\;C:\\windows\\System32\\OpenSSH\\;C:\\Program Files (x86)\\NVIDIA Corporation\\PhysX\\Common;C:\\Program Files\\NVIDIA Corporation\\NVIDIA NvDLISR;C:\\Program Files\\Git\\cmd;C:\\ProgramData\\chocolatey\\bin;C:\\WINDOWS\\system32;C:\\WINDOWS;C:\\WINDOWS\\System32\\Wbem;C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\;C:\\WINDOWS\\System32\\OpenSSH\\;C:\\Program Files\\cursor\\resources\\app\\bin;C:\\Program Files\\nodejs\\;C:\\Users\\natha\\AppData\\Local\\hermes\\hermes-agent\\venv\\Scripts;C:\\Users\\natha\\.local\\bin;C:\\Users\\natha\\AppData\\Local\\Microsoft\\WindowsApps;C:\\Program Files\\nodejs\\;C:\\Users\\natha\\AppData\\Local\\Programs\\Microsoft VS Code\\bin;C:\\Users\\natha\\AppData\\Roaming\\npm;C:\\Users\\natha\\AppData\\Local\\Microsoft\\WinGet\\Packages\\BurntSushi.ripgrep.MSVC_Microsoft.Winget.Source_8wekyb3d8bbwe\\ripgrep-15.1.0-x86_64-pc-windows-msvc;C:\\Users\\natha\\AppData\\Local\\Microsoft\\WinGet\\Packages\\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\\ffmpeg-8.1.1-full_build\\bin;"
+      }
+    }
+  }
+}

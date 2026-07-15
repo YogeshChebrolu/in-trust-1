@@ -1,0 +1,54 @@
+@import "tailwindcss";
+
+@theme {
+  --color-green-1: #f3f8f6;
+  --color-green-2: #e6f0ec;
+  --color-green-3: #c2dcd1;
+  --color-green-9: #0a5136;
+  --color-green-12: #032218;
+
+  --color-neutral-200: #e5e7eb;
+  --color-neutral-300: #d2d6db;
+  --color-neutral-400: #9da4ae;
+  --color-neutral-700: #384250;
+
+  --color-success-50: #ecfdf3;
+  --color-error-50: #fef3f2;
+
+  --color-rule: #d1d1d1;
+
+  --font-sans: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-bricolage), ui-sans-serif, system-ui, sans-serif;
+  --font-plex: var(--font-plex), ui-sans-serif, system-ui, sans-serif;
+  --font-inter: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-inter-tight: var(--font-inter-tight), ui-sans-serif, system-ui, sans-serif;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.no-scrollbar {
+  scrollbar-width: none;
+}
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+html,
+body {
+  background: #ffffff;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--font-onest), ui-sans-serif, system-ui, sans-serif;
+}
