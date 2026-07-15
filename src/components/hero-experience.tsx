@@ -11,16 +11,16 @@ import { ChatPanel } from "./chat-panel";
  * fades out and the tab walkthrough fades in on the right.
  * ------------------------------------------------------------------ */
 
-const SCENE = 760;
+const SCENE = 820;
 const CHAT_LEN = 1700; // scroll spent playing the conversation
-const TRAVEL_LEN = 560; // scroll spent sliding the panel left
+const TRAVEL_LEN = 680; // scroll spent moving the panel up-and-left
 const TAB_LEN = 460; // scroll spent on each product tab
 const N_TABS = 3;
 const TOTAL = CHAT_LEN + TRAVEL_LEN + TAB_LEN * N_TABS;
 
-/** Panel's home on the right (matching the old hero chat) and on the left. */
-const RIGHT_BOX = { left: 700, top: 80, width: 560, height: 569 };
-const LEFT_BOX = { left: -48, top: 56, width: 748, height: 648 };
+/** Panel starts full-width along the bottom, then shrinks to the left. */
+const BOTTOM_BOX = { left: 0, top: 352, width: 1276, height: 448 };
+const LEFT_BOX = { left: -48, top: 86, width: 748, height: 648 };
 
 const STATS = [
   { value: "3x", label: "Faster decision making", width: "w-[148px]" },
@@ -58,8 +58,6 @@ const SLIDES: Slide[] = [
 
 const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
-const easeInOut = (t: number) =>
-  t < 0.5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
 const smoothstep = (a: number, b: number, x: number) => {
   const t = clamp((x - a) / (b - a), 0, 1);
   return t * t * (3 - 2 * t);
@@ -101,18 +99,24 @@ export function HeroExperience() {
   );
   const slide = SLIDES[tabIndex];
 
-  const e = easeInOut(travel);
+  // Sequenced so the steps never overlap into a washed-out middle state:
+  // 1) headline fades out while the panel is still parked at the bottom,
+  // 2) the panel moves up-and-left while the chat crossfades to the product,
+  // 3) the right-side text fades in last.
+  const headlineOpacity = 1 - smoothstep(0, 0.24, travel);
+  // The panel moves steadily through the crossfade so the card is visibly
+  // morphing while the chat swaps to the product — no empty middle frame.
+  const move = smoothstep(0.22, 0.82, travel);
   const box = {
-    left: lerp(RIGHT_BOX.left, LEFT_BOX.left, e),
-    top: lerp(RIGHT_BOX.top, LEFT_BOX.top, e),
-    width: lerp(RIGHT_BOX.width, LEFT_BOX.width, e),
-    height: lerp(RIGHT_BOX.height, LEFT_BOX.height, e),
+    left: lerp(BOTTOM_BOX.left, LEFT_BOX.left, move),
+    top: lerp(BOTTOM_BOX.top, LEFT_BOX.top, move),
+    width: lerp(BOTTOM_BOX.width, LEFT_BOX.width, move),
+    height: lerp(BOTTOM_BOX.height, LEFT_BOX.height, move),
   };
 
-  const headlineOpacity = 1 - smoothstep(0, 0.4, travel);
-  const chatOpacity = 1 - smoothstep(0, 0.45, travel);
-  const productOpacity = smoothstep(0.35, 0.9, travel);
-  const textOpacity = smoothstep(0.55, 1, travel);
+  const chatOpacity = 1 - smoothstep(0.3, 0.56, travel);
+  const productOpacity = smoothstep(0.36, 0.64, travel);
+  const textOpacity = smoothstep(0.72, 1, travel);
 
   return (
     <section className="-mb-px w-full border border-rule px-[80px]">
@@ -127,21 +131,21 @@ export function HeroExperience() {
             className="sticky top-0 overflow-hidden"
             style={{ height: SCENE }}
           >
-            {/* Headline (hero) — fades as the panel leaves */}
+            {/* Headline (hero) — centered on top, fades as the panel leaves */}
             <div
-              className="absolute flex flex-col gap-[62px]"
+              className="absolute flex flex-col items-center gap-[24px] px-[40px] text-center"
               style={{
-                left: 40,
-                top: 80,
-                width: 614,
+                left: 0,
+                right: 0,
+                top: 48,
                 opacity: headlineOpacity,
                 transform: `translateY(${-24 * (1 - headlineOpacity)}px)`,
                 pointerEvents: headlineOpacity < 0.5 ? "none" : "auto",
               }}
             >
-              <div className="flex w-full flex-col gap-[22px]">
+              <div className="flex flex-col items-center gap-[18px]">
                 <h1
-                  className="w-[610px] bg-clip-text text-[60px] leading-[1.15] font-medium tracking-[-1.2px] text-transparent"
+                  className="max-w-[820px] bg-clip-text text-[54px] leading-[1.12] font-medium tracking-[-1.08px] text-transparent"
                   style={{
                     backgroundImage:
                       "linear-gradient(139.5deg, #333333 3.47%, #000000 94.75%)",
@@ -153,12 +157,12 @@ export function HeroExperience() {
                     Not 10 days.
                   </span>
                 </h1>
-                <p className="w-full text-[20px] leading-[1.5] font-medium tracking-[-0.4px] text-[rgba(0,0,0,0.5)]">
+                <p className="max-w-[560px] text-[19px] leading-[1.5] font-medium tracking-[-0.38px] text-[rgba(0,0,0,0.5)]">
                   Buying insurance shouldn&apos;t mean endless calls, confusing
                   jargon, or pressure from sales agents.
                 </p>
               </div>
-              <div className="flex flex-col items-start gap-[8px]">
+              <div className="flex flex-col items-center gap-[8px]">
                 <CoveyButton>Try Covey</CoveyButton>
                 <p className="text-[14px] font-medium tracking-[-0.28px] whitespace-nowrap text-neutral-400">
                   Free to try · No phone number required · No spam. Ever.
@@ -245,17 +249,15 @@ export function HeroExperience() {
                 ))}
               </div>
 
-              {/* Live chat (hero) — anchored top-right, fades as it leaves */}
+              {/* Live chat (hero) — fills the full-width panel, fades as it leaves */}
               <div
-                className="absolute top-0 right-0"
+                className="absolute inset-0"
                 style={{
-                  width: RIGHT_BOX.width,
-                  height: RIGHT_BOX.height,
                   opacity: chatOpacity,
                   pointerEvents: chatOpacity < 0.5 ? "none" : "auto",
                 }}
               >
-                <ChatPanel scrollProgress={chatProgress} />
+                <ChatPanel scrollProgress={chatProgress} wide />
               </div>
             </div>
           </div>

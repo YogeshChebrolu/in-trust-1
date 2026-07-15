@@ -100,11 +100,19 @@ function TypingBubble() {
   );
 }
 
-function Bubble({ message, showLabel }: { message: Message; showLabel: boolean }) {
+function Bubble({
+  message,
+  showLabel,
+  wide,
+}: {
+  message: Message;
+  showLabel: boolean;
+  wide?: boolean;
+}) {
   if (message.from === "user") {
     return (
       <div className="flex w-full justify-end">
-        <div className="flex max-w-[355px] justify-end">
+        <div className={`flex justify-end ${wide ? "max-w-[46%]" : "max-w-[355px]"}`}>
           <div className="flex w-full items-center rounded-tl-[8px] rounded-br-[8px] rounded-bl-[8px] bg-green-9 px-[14px] py-[10px]">
             <p className="text-[14px] leading-[20px] text-white">
               {message.lines[0]}
@@ -117,7 +125,7 @@ function Bubble({ message, showLabel }: { message: Message; showLabel: boolean }
 
   return (
     <div className="flex w-full items-start">
-      <div className="flex w-[378px] max-w-[720px] flex-col gap-[6px]">
+      <div className={`flex flex-col gap-[6px] ${wide ? "w-[46%]" : "w-[378px] max-w-[720px]"}`}>
         {showLabel && <CoveyLabel />}
         <div className="flex w-full flex-col pl-[16px]">
           <div className="w-full rounded-tr-[8px] rounded-br-[8px] rounded-bl-[8px] border border-[#eaecf0] bg-[#f9fafb] px-[14px] py-[10px] text-[14px] text-[#101828]">
@@ -138,7 +146,13 @@ function Bubble({ message, showLabel }: { message: Message; showLabel: boolean }
   );
 }
 
-export function ChatPanel({ scrollProgress }: { scrollProgress?: number }) {
+export function ChatPanel({
+  scrollProgress,
+  wide,
+}: {
+  scrollProgress?: number;
+  wide?: boolean;
+}) {
   // When scrollProgress is provided the conversation is driven by page scroll;
   // otherwise it auto-plays on a timer and loops.
   const auto = scrollProgress === undefined;
@@ -201,8 +215,8 @@ export function ChatPanel({ scrollProgress }: { scrollProgress?: number }) {
   const visible = SCRIPT.slice(0, shownCount);
 
   return (
-    <div className="flex h-[569px] w-full flex-col items-center gap-[26px] border-t border-l border-rule px-[14px] py-[24px]">
-      <div className="flex w-full flex-1 flex-col justify-between overflow-hidden px-[24px]">
+    <div className="flex h-full w-full flex-col items-center gap-[26px] overflow-hidden rounded-[14px] border border-[#e5e7eb] bg-white px-[14px] py-[24px]">
+      <div className={`flex w-full flex-1 flex-col justify-between overflow-hidden ${wide ? "px-[48px]" : "px-[24px]"}`}>
         <div
           ref={scrollRef}
           className="no-scrollbar flex flex-1 flex-col gap-[16px] overflow-y-auto pt-[8px]"
@@ -215,6 +229,7 @@ export function ChatPanel({ scrollProgress }: { scrollProgress?: number }) {
               <Bubble
                 message={message}
                 showLabel={i === 0 || visible[i - 1].from !== "covey"}
+                wide={wide}
               />
             </div>
           ))}
