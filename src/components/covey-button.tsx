@@ -21,7 +21,11 @@ export function CoveyButton({
   return (
     <button
       type="button"
-      className="relative flex shrink-0 items-center justify-center overflow-hidden rounded-[10px] px-[21px] py-[12px]"
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden ${
+        size === "sm"
+          ? "rounded-[8px] px-4 py-2"
+          : "rounded-[10px] px-[21px] py-[12px]"
+      }`}
     >
       <span aria-hidden className="pointer-events-none absolute inset-0 rounded-[10px]">
         <span

@@ -114,8 +114,8 @@ export function PolicyDetailArtifact({ payload: p }: { payload: PolicyDetailPayl
     <div className="bg-bg-surface border-border-light overflow-hidden rounded-xl border shadow-[0px_2px_8px_rgba(0,0,0,0.08)]">
       {/* header */}
       <div className="border-border-light border-b px-4 py-3">
-        <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
+        <div className="flex flex-wrap items-start justify-between gap-2">
+          <div className="min-w-52 flex-1">
             <p className="text-text-light flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
               <InsurerLogo
                 name={p.insurer?.shortName ?? p.insurer?.name}

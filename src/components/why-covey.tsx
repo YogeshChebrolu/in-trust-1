@@ -208,7 +208,7 @@ const FILLER = [
 function Para({ index, width = 100 }: { index: number; width?: number }) {
   return (
     <p
-      className="text-justify text-[10.5px] leading-[1.75] text-[#454e49]"
+      className="text-justify text-[11.5px] leading-[1.75] text-[#454e49] sm:text-[10.5px]"
       style={{ ...SERIF, width: `${width}%` }}
     >
       {FILLER[index % FILLER.length]}
@@ -292,7 +292,7 @@ function CoveyCursor({
 }) {
   return (
     <div
-      className="absolute -top-4 -right-3 z-20 flex items-start"
+      className="absolute -top-7 -right-2 z-20 flex items-start sm:-top-4 sm:-right-3"
       style={{
         opacity: active,
         transform: `translate(${(1 - active) * 46}px, ${(1 - active) * 38}px)`,
@@ -344,7 +344,7 @@ function ClauseBlock({
         {clause.section} {clause.heading}
       </p>
       <p
-        className="mt-1.5 text-justify text-[10.5px] leading-[1.75] text-[#454e49]"
+        className="mt-1.5 text-justify text-[11.5px] leading-[1.75] text-[#454e49] sm:text-[10.5px]"
         style={SERIF}
       >
         {clause.wording}
@@ -385,7 +385,7 @@ function Sheet({
   children: React.ReactNode;
 }) {
   return (
-    <div className="relative rounded-[4px] border border-[#dfe2e0] bg-white px-14 pt-11 pb-9 shadow-[0_18px_44px_-26px_rgba(20,30,25,0.3)]">
+    <div className="relative rounded-[4px] border border-[#dfe2e0] bg-white px-6 pt-9 pb-8 shadow-[0_18px_44px_-26px_rgba(20,30,25,0.3)] sm:px-14 sm:pt-11 sm:pb-9">
       <div className="mb-7 flex items-baseline justify-between border-b border-[#e8eae8] pb-3">
         <p
           className="text-[9.5px] tracking-[0.14em] text-[#8a938d] uppercase"
@@ -397,7 +397,7 @@ function Sheet({
           UIN: HSHLIP24101V012324
         </p>
       </div>
-      <div className="min-h-[660px] space-y-4">{children}</div>
+      <div className="space-y-4 sm:min-h-[660px]">{children}</div>
       <p
         className="mt-8 text-center text-[9.5px] text-[#a0a8a3]"
         style={SERIF}
@@ -416,9 +416,9 @@ function PolicyDocument({
   clauseRef: (index: number) => (node: HTMLDivElement | null) => void;
 }) {
   return (
-    <div className="w-[620px] space-y-7">
+    <div className="w-[min(620px,100vw-24px)] space-y-7">
       {/* Cover sheet — what beat 4 lands on */}
-      <div className="relative flex h-[780px] flex-col items-center justify-center rounded-[4px] border border-[#dfe2e0] bg-white px-14 text-center shadow-[0_18px_44px_-26px_rgba(20,30,25,0.3)]">
+      <div className="relative flex h-[540px] flex-col items-center justify-center rounded-[4px] border border-[#dfe2e0] bg-white px-8 text-center shadow-[0_18px_44px_-26px_rgba(20,30,25,0.3)] sm:h-[780px] sm:px-14">
         <p
           className="text-[10px] tracking-[0.28em] text-[#8a938d] uppercase"
           style={SERIF}
@@ -463,10 +463,24 @@ function PolicyDocument({
  * Copy
  * ================================================================== */
 
+// Per-beat mobile scale: single cards can render much larger than the
+// two-card scene, which has to fit its 660px spread on a phone.
 const BEATS = [
-  { line: "The advisor tells you what's covered.", visual: <PitchCard /> },
-  { line: "Not what isn't.", visual: <SkippedScene /> },
-  { line: "You find out at the hospital.", visual: <ClaimCard /> },
+  {
+    line: "The advisor tells you what's covered.",
+    visual: <PitchCard />,
+    scaleClass: "scale-[0.8] sm:scale-[0.78] md:scale-[0.9] lg:scale-100",
+  },
+  {
+    line: "Not what isn't.",
+    visual: <SkippedScene />,
+    scaleClass: "scale-[0.5] sm:scale-[0.78] md:scale-[0.9] lg:scale-100",
+  },
+  {
+    line: "You find out at the hospital.",
+    visual: <ClaimCard />,
+    scaleClass: "scale-[0.78] sm:scale-[0.78] md:scale-[0.9] lg:scale-100",
+  },
 ];
 
 const BEAT4_LINE = "It was all in the policy. Nobody read it to you.";
@@ -536,6 +550,20 @@ function Scene({ phase }: { phase: number }) {
     smoothstep(STOP_PHASES[i] - 0.55, STOP_PHASES[i] - 0.12, phase),
   );
 
+  // Below lg the margin notes are hidden, so the active clause's note pins
+  // to the bottom of the screen instead. Waits for the "Meet Covey" caption
+  // to clear before the first note fades in.
+  // Latest stop that has begun activating wins (activations never reverse).
+  let noteIndex = 0;
+  activations.forEach((a, i) => {
+    if (a > 0.35) noteIndex = i;
+  });
+  const noteOpacity =
+    activations[noteIndex] *
+    smoothstep(6.75, 7.0, phase) *
+    (1 - smoothstep(11.4, 11.9, phase));
+  const activeNote = CLAUSES[noteIndex];
+
   // Document container: slides in as the 4th beat, then scales to full.
   const docRel = Math.min(phase - 4.5, 0); // <0 while arriving
   const docX = Math.max(docRel, -1.5) * -88;
@@ -589,13 +617,13 @@ function Scene({ phase }: { phase: number }) {
         return (
           <div key={beat.line} aria-hidden={opacity < 0.5}>
             <div
-              className="pointer-events-none absolute top-[8vh] bottom-[26vh] left-1/2 z-10 flex items-center justify-center"
+              className="pointer-events-none absolute top-[14vh] bottom-[20vh] left-1/2 z-10 flex items-center justify-center sm:top-[8vh] sm:bottom-[26vh]"
               style={{
                 transform: `translateX(calc(-50% + ${rel * -88}vw)) scale(${1 - Math.abs(rel) * 0.06})`,
                 opacity,
               }}
             >
-              <div className="origin-center scale-[0.62] sm:scale-[0.78] md:scale-[0.9] lg:scale-100">
+              <div className={`origin-center ${beat.scaleClass}`}>
                 {beat.visual}
               </div>
             </div>
@@ -682,6 +710,30 @@ function Scene({ phase }: { phase: number }) {
           <h3 className="mt-2 text-[clamp(26px,3.2vw,44px)] leading-[1.1] font-medium tracking-[-0.04em] text-[#111513]">
             Covey reads it. All of it.
           </h3>
+        </div>
+      </div>
+
+      {/* Mobile: Covey's note for the active clause, pinned to the bottom
+          (the in-document margin notes only exist from lg up). */}
+      <div
+        className="absolute inset-x-3 bottom-4 z-30 lg:hidden"
+        style={{ opacity: noteOpacity }}
+        aria-hidden={noteOpacity < 0.5}
+      >
+        <div
+          key={noteIndex}
+          className="animate-[fadeInUp_350ms_ease-out] rounded-[12px] border border-[#e2e6e3] bg-white p-4 shadow-[0_20px_50px_-30px_rgba(10,40,28,0.4)]"
+          style={{ borderLeft: `3px solid ${activeNote.color}` }}
+        >
+          <p
+            className="text-[10px] font-semibold tracking-[0.08em] uppercase"
+            style={{ color: activeNote.color }}
+          >
+            {activeNote.good ? "Covey found — keep this" : "Covey found"}
+          </p>
+          <p className="mt-1.5 text-[13.5px] leading-[1.5] text-[#232d27]">
+            {activeNote.note}
+          </p>
         </div>
       </div>
 

@@ -90,9 +90,14 @@ const smoothstep = (a: number, b: number, x: number) => {
   return t * t * (3 - 2 * t);
 };
 
+// The desktop composition's design width: the clip runs from the section's
+// left rule to its right edge (80px gutter + 1280px padded content).
+const DESIGN_W = 1360;
+
 export function HeroExperience() {
   const trackRef = useRef<HTMLDivElement>(null);
   const [scrolled, setScrolled] = useState(0);
+  const [vw, setVw] = useState<number | null>(null);
 
   useEffect(() => {
     let frame = 0;
@@ -106,15 +111,26 @@ export function HeroExperience() {
     const onScroll = () => {
       if (!frame) frame = requestAnimationFrame(update);
     };
-    update();
+    const onResize = () => {
+      setVw(window.innerWidth);
+      onScroll();
+    };
+    onResize();
     window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("resize", onResize);
     return () => {
       if (frame) cancelAnimationFrame(frame);
       window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      window.removeEventListener("resize", onResize);
     };
   }, []);
+
+  // Three tiers: phones get a stacked scene, mid widths get the desktop
+  // composition zoomed to fit, full width gets it as designed.
+  const isMobile = (vw ?? 1440) < 768;
+  const zoom =
+    vw === null ? 1 : Math.min(1, Math.max((vw - 32) / DESIGN_W, 0.45));
+  const zoomed = !isMobile && zoom < 1;
 
   // Derived scene state.
   const chatProgress = clamp(scrolled / CHAT_LEN, 0, 1);
@@ -144,20 +160,137 @@ export function HeroExperience() {
   const winW = lerp(WIN_W1, WIN_W2, slide);
   const copyOpacity = smoothstep(0.55, 0.98, travel);
 
+  // ---- Mobile: chat full-width in fold one; in fold two the panel takes
+  // the top of the screen and the step copy sits underneath, same phases. ----
+  if (isMobile) {
+    return (
+      <section className="-mb-px w-full border border-rule px-3">
+        <div
+          ref={trackRef}
+          className="relative w-full"
+          style={{ height: `calc(100svh + ${TOTAL}px)` }}
+        >
+          <div className="sticky top-0 h-[100svh] overflow-hidden">
+            {/* Headline — fades as the chat takes over */}
+            <div
+              className="absolute inset-x-1 top-7 z-10 flex flex-col items-center gap-4 text-center"
+              style={{
+                opacity: headlineOpacity,
+                transform: `translateY(${-20 * (1 - headlineOpacity)}px)`,
+                pointerEvents: headlineOpacity < 0.5 ? "none" : "auto",
+              }}
+            >
+              <h1
+                className="bg-clip-text text-[clamp(25px,7.4vw,34px)] leading-[1.15] font-medium tracking-[-0.6px] text-transparent"
+                style={{
+                  backgroundImage:
+                    "linear-gradient(139.5deg, #333333 3.47%, #000000 94.75%)",
+                }}
+              >
+                Find the right insurance in{" "}
+                <span className="text-[#0f6642]">10 minutes</span>.{" "}
+                <span className="line-through decoration-solid">
+                  Not 10 days.
+                </span>
+              </h1>
+              <CoveyButton size="sm">Try Covey</CoveyButton>
+            </div>
+
+            {/* Chat — fold one; rises as the headline clears, leaves on travel */}
+            <div
+              className="absolute inset-x-0 overflow-hidden rounded-[14px] border border-border-light bg-bg-surface shadow-[0px_2px_6px_-2px_rgba(0,0,0,0.04),0px_18px_50px_-24px_rgba(0,0,0,0.12)]"
+              style={{
+                top: lerp(190, 68, rise),
+                bottom: 14,
+                opacity: 1 - slide,
+                transform: `translateY(${-28 * slide}px)`,
+                pointerEvents: slide > 0.5 ? "none" : "auto",
+              }}
+            >
+              <ChatPanel scrollProgress={chatProgress} embedded />
+            </div>
+
+            {/* Panel — fold two, top of the screen */}
+            <div
+              className="absolute inset-x-0 top-3 overflow-hidden rounded-[14px] border border-border-light bg-bg-surface shadow-[0px_2px_6px_-2px_rgba(0,0,0,0.04),0px_18px_50px_-24px_rgba(0,0,0,0.12)]"
+              style={{
+                height: "58svh",
+                opacity: slide,
+                transform: `translateY(${16 * (1 - slide)}px)`,
+                pointerEvents: slide > 0.5 ? "auto" : "none",
+              }}
+              aria-hidden={slide < 0.5}
+            >
+              <DemoPanel
+                events={panelEvents}
+                profile={DEMO_PROFILE}
+                activeKey={activeKey}
+                progress={chatProgress}
+                embedded
+              />
+            </div>
+
+            {/* Step copy — fold two, under the panel */}
+            <div
+              className="absolute inset-x-2 bottom-0 flex flex-col justify-center"
+              style={{
+                top: "calc(58svh + 12px)",
+                opacity: copyOpacity,
+                pointerEvents: copyOpacity < 0.5 ? "none" : "auto",
+              }}
+              aria-hidden={copyOpacity < 0.5}
+            >
+              <div key={activeKey} className="animate-[fadeInUp_450ms_ease-out]">
+                <p className="text-[11px] font-semibold tracking-[0.4px] text-green-9 uppercase">
+                  {copy.eyebrow}
+                </p>
+                <h2 className="mt-1.5 text-[clamp(19px,5.6vw,25px)] leading-[1.15] font-medium tracking-[-0.5px] text-black">
+                  {copy.title}
+                </h2>
+                <p className="mt-2 line-clamp-3 text-[13.5px] leading-[1.55] text-[rgba(0,0,0,0.55)]">
+                  {copy.body}
+                </p>
+              </div>
+              <div className="mt-3.5 flex items-center gap-2">
+                {STEP_KEYS.map((key, i) => (
+                  <span
+                    key={key}
+                    className={`h-[3px] rounded-full transition-all duration-300 ${
+                      inFold2 && i === tabIndex
+                        ? "w-[32px] bg-green-9"
+                        : "w-[16px] bg-[#e5e7eb]"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
-    <section className="-mb-px w-full border border-rule px-[80px]">
+    <section
+      className="-mb-px w-full border border-rule"
+      style={{ paddingInline: zoomed ? 16 : 80 }}
+    >
       <div className="w-full">
         {/* Tall track — the scene pins while the chat plays and the tabs step. */}
         <div
           ref={trackRef}
           className="relative w-full"
-          style={{ height: SCENE + TOTAL }}
+          style={{ height: SCENE * zoom + TOTAL }}
         >
           {/* The clip bleeds across the left 80px gutter to the section rule, so
-              its origin sits at the rule; padded content offsets by GUTTER. */}
+              its origin sits at the rule; padded content offsets by GUTTER.
+              Below the design width the whole composition zooms to fit. */}
           <div
-            className="sticky top-0 -ml-[80px] w-[calc(100%+80px)] overflow-hidden"
-            style={{ height: SCENE }}
+            className={`sticky top-0 overflow-hidden ${zoomed ? "" : "-ml-[80px] w-[calc(100%+80px)]"}`}
+            style={{
+              height: SCENE,
+              ...(zoomed ? { width: DESIGN_W, zoom } : {}),
+            }}
           >
             {/* Headline (hero) — centered on top, fades as the app takes over */}
             <div
