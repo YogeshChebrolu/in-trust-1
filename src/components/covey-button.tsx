@@ -4,6 +4,8 @@ const RADIAL_SHEEN = [
   "radial-gradient(ellipse 86% 86% at 9.7% 17.3%, rgba(61,198,148,0.8) 15.38%, rgba(46,157,117,0.85) 36.5%, rgba(32,116,86,0.9) 57.7%, rgba(17,75,55,0.95) 78.8%, rgba(10,54,40,0.975) 89.4%, rgba(3,34,24,1) 100%)",
 ].join(", ");
 
+const PRODUCT_URL = "https://coverwisely.vercel.app/";
+
 const BASE_LAYERS = [
   "linear-gradient(90deg, rgba(255,255,255,0.01) 0%, rgba(255,255,255,0.01) 100%)",
   'url("/assets/btn-texture.png")',
@@ -19,8 +21,10 @@ export function CoveyButton({
   size?: "sm" | "md";
 }) {
   return (
-    <button
-      type="button"
+    <a
+      href={PRODUCT_URL}
+      target="_blank"
+      rel="noopener noreferrer"
       className={`relative flex shrink-0 items-center justify-center overflow-hidden ${
         size === "sm"
           ? "rounded-[8px] px-4 py-2"
@@ -50,6 +54,6 @@ export function CoveyButton({
       >
         {children}
       </span>
-    </button>
+    </a>
   );
 }
