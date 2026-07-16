@@ -83,15 +83,6 @@ const COPY = [
   },
 ];
 
-// Stats strip hidden for now.
-// const STATS = [
-//   { value: "3x", label: "Faster decision making", width: "w-[148px]" },
-//   { value: "1 Conversation", label: "instead of 5 calls", width: "w-[171px]" },
-//   { value: "100", label: "Policy transparency", width: "w-[137px]" },
-//   { value: "24×7", label: "AI assistance", width: "w-[82px]" },
-//   { value: "Minutes", label: "Instead of days", width: "w-[97px]" },
-// ];
-
 const clamp = (v: number, a: number, b: number) => Math.min(Math.max(v, a), b);
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const smoothstep = (a: number, b: number, x: number) => {
@@ -181,7 +172,7 @@ export function HeroExperience() {
               }}
             >
               <h1
-                className="max-w-[820px] bg-clip-text text-[46px] leading-[1.12] font-medium tracking-[-0.92px] text-transparent"
+                className="bg-clip-text text-[40px] leading-[1.12] font-medium tracking-[-0.8px] whitespace-nowrap text-transparent"
                 style={{
                   backgroundImage:
                     "linear-gradient(139.5deg, #333333 3.47%, #000000 94.75%)",
@@ -274,7 +265,6 @@ export function HeroExperience() {
             </div>
           </div>
         </div>
-        {/* Stats strip hidden for now. */}
       </div>
     </section>
   );

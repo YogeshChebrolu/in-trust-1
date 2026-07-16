@@ -1,460 +1,493 @@
 "use client";
 
-import Image from "next/image";
-import { useEffect, useRef } from "react";
+import {
+  Check,
+  CheckCircle2,
+  FileText,
+  MessageCircle,
+  PhoneIncoming,
+} from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-/** Vertical distance between one left/right pair and the next. */
-const PAIR_STEP = 300;
-const SCENE_HEIGHT = 741;
-const SPINE_X = 299;
-/** Height of the pinned view: the rail plus the section's top padding. */
-const PINNED_HEIGHT = SCENE_HEIGHT + 80;
-/** Headroom above the first card so the fade has empty space to sit in at rest. */
-const TOP_PAD = 44;
-/** Depth of the soft fade that dissolves cards at the rail's edges. */
-const FADE = 72;
+const BLUE = "#0563f0";
+const BLUE_SOFT = "#5b9bff";
+const LAST_STEP = 4;
+const SCROLL_SEGMENT = 720;
+const clamp = (value: number, min = 0, max = 1) =>
+  Math.min(Math.max(value, min), max);
 
-const RAIL_MASK = `linear-gradient(to bottom, transparent 0px, black ${FADE}px, black calc(100% - ${FADE}px), transparent 100%)`;
-
-type NoteCard = {
-  side: "left";
-  name: string;
-  quote: string;
-  from: string;
-  to: string;
-  accent: string;
-  /** Ink for the note text — always a deep shade of the card's own hue. */
-  ink: string;
+type Step = {
+  label: string;
+  eyebrow: string;
+  title: ReactNode;
+  body: string;
 };
 
-type TestimonialCard = {
-  side: "right";
-  name: string;
-  quote: string;
-  from: string;
-  to: string;
-  accent: string;
-  nameColor: string;
-  avatar?: string;
-};
-
-type Card = NoteCard | TestimonialCard;
-
-/** Left = chat-style notes, right = testimonials. They alternate down the spine. */
-const CARDS: Card[] = [
+const STEPS: Step[] = [
   {
-    side: "left",
-    name: "INDERDEEP",
-    quote: "I still don't know what copay means.",
-    from: "#30c4c0",
-    to: "#21a987",
-    accent: "#21a987",
-    ink: "rgba(19,122,103,0.94)",
+    label: "Enquiry",
+    eyebrow: "One enquiry",
+    title: (
+      <>
+        One enquiry can become <span className="text-green-9">10 calls</span>.
+      </>
+    ),
+    body: "You asked for a quote. What arrives next is often more conversation, not more understanding.",
   },
   {
-    side: "right",
-    name: "Ramachandran",
-    quote:
-      "I spoke with nearly 10 customer care representatives and received different guidance from each, making the process confusing. This experience showed me the value of a dedicated agent.",
-    from: "#fd9e40",
-    to: "#ff750a",
-    accent: "#ff750a",
-    nameColor: "#713a04",
-    avatar: "/assets/avatar-ramachandran.jpg",
+    label: "Noise",
+    eyebrow: "The follow-up",
+    title: <>One form. Several very enthusiastic advisors.</>,
+    body: "Calls, messages and follow-ups multiply around the same question you started with.",
   },
   {
-    side: "left",
-    name: "INDERDEEP",
-    quote:
-      "They often mislead customers and have very poor service, taking days to respond and not answering questions properly.",
-    from: "#5ab7f1",
-    to: "#299ce4",
-    accent: "#299ce4",
-    ink: "rgba(15,88,140,0.94)",
+    label: "Answers",
+    eyebrow: "The explanation",
+    title: <>Ten conversations. Three different answers.</>,
+    body: "The benefits are easy to repeat. The conditions still send you back to the policy wording.",
   },
   {
-    side: "right",
-    name: "Aarav",
-    quote:
-      "I spoke with nearly 10 customer care representatives and received different guidance from each, making the process confusing. This experience showed me the value of a dedicated agent.",
-    from: "#b69bf5",
-    to: "#7d5bdb",
-    accent: "#7d5bdb",
-    nameColor: "#3b1d7a",
+    label: "Payment",
+    eyebrow: "The decision",
+    title: <>Eventually, you pay.</>,
+    body: "The buying journey feels finished—even when the understanding isn’t.",
   },
   {
-    side: "left",
-    name: "PRIYA",
-    quote:
-      "The agent kept pushing the plan with the highest commission. I only found out much later.",
-    from: "#7dd3fc",
-    to: "#0ea5e9",
-    accent: "#0ea5e9",
-    ink: "rgba(12,84,130,0.94)",
-  },
-  {
-    side: "right",
-    name: "Meenakshi",
-    quote:
-      "Nobody told me about the two year waiting period until my claim was rejected. It was all in the fine print I never read.",
-    from: "#fda4af",
-    to: "#f43f5e",
-    accent: "#f43f5e",
-    nameColor: "#7a1128",
-    avatar: "/assets/avatar-meenakshi.jpg",
-  },
-  {
-    side: "left",
-    name: "ARJUN",
-    quote:
-      "Every website showed me the same five plans. None of them explained why.",
-    from: "#5eead4",
-    to: "#0d9488",
-    accent: "#0d9488",
-    ink: "rgba(13,105,95,0.94)",
-  },
-  {
-    side: "right",
-    name: "Sandeep",
-    quote:
-      "One enquiry turned into three weeks of sales calls. I stopped answering unknown numbers entirely.",
-    from: "#fcd34d",
-    to: "#f59e0b",
-    accent: "#f59e0b",
-    nameColor: "#78420a",
-  },
-  {
-    side: "left",
-    name: "FATIMA",
-    quote:
-      "I compared four policies across eleven PDFs and still picked the wrong one.",
-    from: "#a5b4fc",
-    to: "#6366f1",
-    accent: "#6366f1",
-    ink: "rgba(55,58,140,0.94)",
-  },
-  {
-    side: "right",
-    name: "Vikram",
-    quote:
-      "It took five calls and four days just to understand what my own policy actually covered.",
-    from: "#f0abfc",
-    to: "#c026d3",
-    accent: "#c026d3",
-    nameColor: "#6b1478",
-    avatar: "/assets/avatar-vikram.jpg",
+    label: "Policy",
+    eyebrow: "The part that remains",
+    title: (
+      <>
+        You bought the policy.{" "}
+        <span className="text-green-9">But did you understand it?</span>
+      </>
+    ),
+    body: "Room-rent limits, waiting periods and restoration rules are still waiting inside the document.",
   },
 ];
 
-const TILT_RIGHT = { transform: "rotate(8.16deg) skewX(8.16deg) scaleY(0.99)" };
-const TILT_LEFT = { transform: "rotate(-8deg) skewX(-8deg) scaleY(0.99)" };
-
-/** Screw-head dots pinned to a card's four corners. */
-function CornerDots({
-  src,
-  positions,
-}: {
-  src: string;
-  positions: [number, number][];
-}) {
+function MarketplaceMark() {
   return (
-    <>
-      {positions.map(([left, top]) => (
-        <Image
-          key={`${left}-${top}`}
-          src={src}
-          alt=""
-          width={5}
-          height={5}
-          className="absolute size-[5px]"
-          style={{ left, top }}
-        />
-      ))}
-    </>
+    <div className="flex items-center gap-2" aria-hidden>
+      <span
+        className="grid size-8 place-items-center rounded-[9px] text-[13px] font-bold text-white"
+        style={{ backgroundColor: BLUE }}
+      >
+        i
+      </span>
+      <span className="text-[13px] font-semibold text-[#27364b]">
+        compare insurance
+      </span>
+    </div>
   );
 }
 
-function NoteCard({ card, y }: { card: NoteCard; y: number }) {
+function QuoteCard({ small = false }: { small?: boolean }) {
   return (
-    <>
-      {/* Soft tilted copy sitting behind the card */}
+    <div
+      className={`relative overflow-hidden rounded-[20px] border border-[#dce5f4] bg-white shadow-[0_28px_80px_-42px_rgba(26,75,150,0.45)] ${
+        small ? "w-[310px] p-5" : "w-[390px] p-6"
+      }`}
+    >
       <div
-        className="absolute flex items-center justify-center"
-        style={{ left: 0, top: y + 8.29, width: 245.398, height: 236.392 }}
-      >
-        <div
-          className="rounded-[5.92px] border-[1.13px] border-[rgba(255,255,255,0.3)] opacity-20"
-          style={{
-            ...TILT_RIGHT,
-            width: 247.905,
-            height: 201.226,
-            backgroundImage: `linear-gradient(180deg, ${card.to}, ${card.from})`,
-          }}
-        />
+        className="absolute inset-x-0 top-0 h-1"
+        style={{ backgroundColor: BLUE }}
+      />
+      <MarketplaceMark />
+      <p className="mt-7 text-[12px] font-semibold tracking-[0.08em] text-[#6b7890] uppercase">
+        Health insurance
+      </p>
+      <p className="mt-2 text-[22px] leading-[1.2] font-semibold tracking-[-0.45px] text-[#16243a]">
+        Find plans for your family
+      </p>
+      <p className="mt-6 text-[12px] font-medium text-[#6b7890]">
+        Mobile number
+      </p>
+      <div className="mt-2 flex h-12 items-center rounded-[9px] border border-[#cbd7e8] bg-[#fbfdff] px-3 text-[14px] text-[#7b8798]">
+        +91&nbsp;&nbsp;••••• •••••
       </div>
-
       <div
-        className="absolute flex items-center justify-center"
-        style={{ left: 14, top: y, width: 246.973, height: 232.787 }}
+        className="mt-3 flex h-12 items-center justify-center rounded-[9px] text-[14px] font-semibold text-white"
+        style={{ backgroundColor: BLUE }}
       >
-        <div
-          className="relative overflow-hidden rounded-[9.623px]"
-          style={{
-            ...TILT_RIGHT,
-            width: 249.401,
-            height: 198.077,
-            backgroundImage: `linear-gradient(180deg, ${card.from}, ${card.to})`,
-          }}
-        >
-          <div className="absolute top-[14.91px] left-1/2 h-[161.263px] w-[206.005px] -translate-x-1/2">
-            <div className="flex h-[159.227px] w-full flex-col rounded-[8px] border-[0.5px] border-[rgba(255,255,255,0.4)] bg-[rgba(255,255,255,0.5)] px-[15px] py-[8px] backdrop-blur-[11.9px]">
-              <div className="flex items-center pt-[15px] pb-[8px]">
-                <p
-                  className="text-[14px] leading-[1.5] font-medium whitespace-nowrap"
-                  style={{ color: card.ink }}
-                >
-                  {card.name}
-                </p>
-              </div>
-              <p
-                className="w-[183.142px] text-[12px] leading-[1.5] font-medium"
-                style={{ color: card.ink }}
-              >
-                {card.quote}
-              </p>
-            </div>
-          </div>
-          <CornerDots
-            src="/assets/dot-grey.svg"
-            positions={[
-              [7.07, 7.02],
-              [237.3, 7.11],
-              [7.07, 186.02],
-              [237.3, 185.11],
-            ]}
-          />
-        </div>
+        View plans
       </div>
-    </>
+      <p className="mt-4 text-[11px] leading-[1.45] text-[#8a95a6]">
+        Your details help advisors find matching plans.
+      </p>
+    </div>
   );
 }
 
-function TestimonialCard({ card, y }: { card: TestimonialCard; y: number }) {
-  return (
-    <>
-      <div
-        className="absolute flex items-center justify-center"
-        style={{ left: 324, top: y + 16, width: 246.577, height: 232.654 }}
-      >
-        <div
-          className="rounded-[10.349px] opacity-20"
-          style={{
-            ...TILT_LEFT,
-            width: 249,
-            height: 198,
-            backgroundImage: `linear-gradient(180deg, ${card.from}, ${card.to})`,
-          }}
-        />
-      </div>
+const ALERTS = [
+  ["Insurance advisor", "Incoming call", "left-0 top-[54px] -rotate-2", "call"],
+  ["Your quotes are ready", "Tap to compare plans", "right-0 top-[126px] rotate-2", "message"],
+  ["Insurance expert", "Incoming call", "left-[46px] bottom-[104px] rotate-1", "call"],
+  ["Can we help you choose?", "Advisor message · now", "right-[14px] bottom-[30px] -rotate-1", "message"],
+];
 
-      <div
-        className="absolute flex items-center justify-center"
-        style={{ left: 339, top: y, width: 246.577, height: 232.654 }}
-      >
+function NoiseScene() {
+  return (
+    <div className="relative h-[540px] w-[560px]">
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
+        <QuoteCard small />
+      </div>
+      {ALERTS.map(([title, detail, place, type], index) => (
         <div
-          className="relative overflow-hidden rounded-[10.349px]"
-          style={{
-            ...TILT_LEFT,
-            width: 249,
-            height: 198,
-            backgroundImage: `linear-gradient(180deg, ${card.from}, ${card.to})`,
-          }}
+          key={title}
+          className={`absolute flex w-[238px] items-center gap-3 rounded-[15px] border border-[#d9e4f3] bg-white px-4 py-3 shadow-[0_18px_48px_-26px_rgba(28,67,130,0.5)] ${place}`}
+          style={{ zIndex: 10 + index }}
         >
-          <div
-            className="absolute top-[19.11px] left-[13.92px] h-[158.413px] w-[214.088px] rounded-[8.624px] border border-[rgba(255,255,255,0.4)] bg-[rgba(255,255,255,0.5)]"
-            style={{ transform: "rotate(-0.93deg) skewX(-0.93deg)" }}
-          />
-          <div
-            className="absolute top-[32.4px] left-[26.44px] flex w-[190.701px] flex-col gap-[3.45px]"
-            style={{ transform: "rotate(-0.93deg) skewX(-0.93deg)" }}
+          <span
+            className="grid size-9 shrink-0 place-items-center rounded-full text-white"
+            style={{ backgroundColor: type === "call" ? BLUE : BLUE_SOFT }}
           >
-            <div className="flex items-center gap-[8px]">
-              {card.avatar && (
-                <div className="size-[34px] shrink-0 overflow-hidden rounded-full border-[0.862px] border-white bg-white">
-                  <Image
-                    src={card.avatar}
-                    alt=""
-                    width={80}
-                    height={80}
-                    className="size-full object-cover"
-                  />
-                </div>
-              )}
-              <p
-                className="text-[17.248px] leading-[1.5] font-semibold"
-                style={{ color: card.nameColor }}
-              >
-                {card.name}
-              </p>
-            </div>
-            <p className="w-[189.691px] text-[12.074px] leading-[1.4] font-normal tracking-[-0.1207px] text-[rgba(0,0,0,0.55)]">
-              {card.quote}
+            {type === "call" ? (
+              <PhoneIncoming className="size-4" />
+            ) : (
+              <MessageCircle className="size-4" />
+            )}
+          </span>
+          <div className="min-w-0">
+            <p className="truncate text-[13px] font-semibold text-[#1b2b43]">
+              {title}
+            </p>
+            <p className="truncate text-[11px] text-[#748197]">{detail}</p>
+          </div>
+        </div>
+      ))}
+      <div className="absolute right-[86px] bottom-[126px] z-30 rounded-full bg-[#17253b] px-3 py-1.5 text-[11px] font-semibold text-white">
+        7 new follow-ups
+      </div>
+    </div>
+  );
+}
+
+const ANSWERS = [
+  ["Advisor 01", "“Yes, this is fully covered.”", "left-0 top-[54px]", BLUE],
+  ["Advisor 02", "“It depends on the room category.”", "right-0 top-[174px]", "#3b82f6"],
+  ["Advisor 03", "“Please check the policy wording.”", "left-[38px] bottom-[64px]", "#0b4fc6"],
+];
+
+function AnswersScene() {
+  return (
+    <div className="relative h-[520px] w-[560px]">
+      <div className="absolute top-1/2 left-1/2 h-[340px] w-px -translate-x-1/2 -translate-y-1/2 bg-[#e4e9f0]" />
+      {ANSWERS.map(([speaker, answer, place, color]) => (
+        <div
+          key={speaker}
+          className={`absolute w-[330px] rounded-[18px] border border-[#dce4ef] bg-white p-5 shadow-[0_20px_52px_-34px_rgba(17,41,78,0.4)] ${place}`}
+        >
+          <div className="flex items-center gap-2">
+            <span
+              className="size-2 rounded-full"
+              style={{ backgroundColor: color }}
+            />
+            <p className="text-[11px] font-semibold tracking-[0.08em] text-[#788499] uppercase">
+              {speaker}
             </p>
           </div>
-          <CornerDots
-            src="/assets/dot-grey.svg"
-            positions={[
-              [7.07, 7.02],
-              [237.3, 9.11],
-              [7.07, 186.02],
-              [237.3, 186.11],
-            ]}
-          />
+          <p className="mt-3 text-[17px] leading-[1.45] font-medium text-[#1d2b41]">
+            {answer}
+          </p>
         </div>
+      ))}
+      <div className="absolute top-1/2 left-1/2 z-20 grid size-14 -translate-x-1/2 -translate-y-1/2 place-items-center rounded-full border-4 border-white bg-[#f2f5f8] text-[18px] font-semibold text-[#6d788a]">
+        ?
+      </div>
+    </div>
+  );
+}
+
+function PolicyDocument({ className = "" }: { className?: string }) {
+  return (
+    <div
+      className={`relative overflow-hidden rounded-[14px] border border-[#dce5f4] bg-white shadow-[0_30px_80px_-48px_rgba(15,45,90,0.4)] ${className}`}
+    >
+      <div className="flex items-center justify-between border-b border-[#e6edf7] bg-[#f5f8ff] px-6 py-4">
+        <span className="flex items-center gap-2 text-[12px] font-semibold tracking-[0.06em] text-[#5b6577] uppercase">
+          <FileText className="size-4" /> Policy wording
+        </span>
+        <span className="text-[11px] text-[#8994a6]">Page 21 of 48</span>
+      </div>
+      <div className="space-y-3 px-7 py-6">
+        {[74, 100, 92, 82].map((width) => (
+          <div
+            key={width}
+            className="h-2 rounded-full bg-[#eef2fa]"
+            style={{ width: `${width}%` }}
+          />
+        ))}
+        <div className="my-5 rounded-[10px] border border-[#efd8b9] bg-[#fff8ef] p-4">
+          <p className="text-[10px] font-semibold tracking-[0.08em] text-[#a45d14] uppercase">
+            Room rent restriction
+          </p>
+          <p className="mt-2 text-[12px] leading-[1.65] text-[#5d5145]">
+            Room rent shall be limited to 1% of the sum insured per day.
+            Proportionate deductions may apply as specified.
+          </p>
+        </div>
+        {[100, 86, 95].map((width) => (
+          <div
+            key={width}
+            className="h-2 rounded-full bg-[#eef2fa]"
+            style={{ width: `${width}%` }}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function PaymentScene() {
+  return (
+    <div className="relative h-[520px] w-[560px]">
+      <PolicyDocument className="absolute top-[112px] left-[142px] h-[370px] w-[360px] rotate-[3deg] opacity-75" />
+      <div className="absolute top-[50px] left-[42px] z-10 w-[375px] overflow-hidden rounded-[20px] border border-[#dce5f4] bg-white shadow-[0_34px_90px_-44px_rgba(15,63,140,0.5)]">
+        <div className="h-1" style={{ backgroundColor: BLUE }} />
+        <div className="p-7">
+          <div className="flex justify-between">
+            <MarketplaceMark />
+            <CheckCircle2 className="size-6" style={{ color: BLUE }} />
+          </div>
+          <p className="mt-9 text-[12px] font-semibold tracking-[0.08em] text-[#6e7b91] uppercase">
+            Payment successful
+          </p>
+          <p className="mt-2 text-[34px] font-semibold tracking-[-1.2px] text-[#17263d]">
+            ₹18,430
+          </p>
+          <p className="text-[13px] text-[#7b8799]">
+            Family health insurance · 1 year
+          </p>
+          <div className="mt-7 flex items-center gap-2 border-t border-[#e6ebf2] pt-5 text-[12px] text-[#67748a]">
+            <Check className="size-4" style={{ color: BLUE }} />
+            Policy document sent to your email
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function PolicyScene() {
+  return (
+    <div className="relative h-[560px] w-[560px]">
+      <PolicyDocument className="absolute top-[24px] left-[56px] h-[500px] w-[448px]" />
+      <div className="absolute right-0 bottom-[92px] w-[285px] rounded-[16px] border border-[#cfe0fb] bg-[#eff5ff] p-5 shadow-[0_24px_60px_-38px_rgba(15,63,140,0.4)]">
+        <p
+          className="text-[11px] font-semibold tracking-[0.08em] uppercase"
+          style={{ color: BLUE }}
+        >
+          Still unclear
+        </p>
+        <p className="mt-2 text-[16px] leading-[1.4] font-medium text-[#16243a]">
+          What would this clause mean during a real claim?
+        </p>
+      </div>
+    </div>
+  );
+}
+
+function Scene({ index }: { index: number }) {
+  if (index === 0) return <QuoteCard />;
+  if (index === 1) return <NoiseScene />;
+  if (index === 2) return <AnswersScene />;
+  if (index === 3) return <PaymentScene />;
+  return <PolicyScene />;
+}
+
+const MAX_PHASE = STEPS.length;
+
+const smoothstep = (start: number, end: number, value: number) => {
+  const amount = clamp((value - start) / (end - start));
+  return amount * amount * (3 - 2 * amount);
+};
+
+function StoryCard({
+  index,
+  phase,
+}: {
+  index: number;
+  phase: number;
+}) {
+  const step = STEPS[index];
+  const relative = phase - (index + 1);
+  const distance = Math.abs(relative);
+  const bounded = clamp(relative, -1, 1);
+  const angle = bounded * Math.PI * 0.64;
+  const arcX = Math.sin(angle) * 38;
+  const arcY = (1 - Math.cos(angle)) * 18;
+  const visualOpacity = Math.pow(clamp(1 - distance / 0.78), 1.35);
+  const captionOpacity = Math.pow(clamp(1 - distance / 0.38), 1.15);
+  const scale = 1 - clamp(distance) * 0.13;
+  const rotation = bounded * 16;
+
+  return (
+    <>
+      <div
+        className="pointer-events-none absolute top-[clamp(42px,7vh,76px)] left-1/2 z-10 h-[430px] w-[600px] origin-center"
+        style={{
+          left: `calc(50% + ${arcX}vw)`,
+          opacity: visualOpacity,
+          transform: `translate(-50%, ${arcY}vh) rotate(${rotation}deg) scale(${scale})`,
+          zIndex: 30 - Math.round(distance * 10),
+        }}
+        aria-hidden={visualOpacity < 0.5}
+      >
+        <div className="flex size-full origin-center items-center justify-center scale-[0.54] sm:scale-[0.66] md:scale-[0.78] lg:scale-[0.84]">
+          <div className={index === LAST_STEP ? "-translate-y-14" : undefined}>
+            <Scene index={index} />
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="pointer-events-none absolute inset-x-5 bottom-[clamp(46px,7vh,74px)] z-40 mx-auto max-w-[820px] text-center"
+        style={{
+          opacity: captionOpacity,
+          transform: `translateY(${relative * -20}px)`,
+        }}
+        aria-hidden={captionOpacity < 0.5}
+      >
+        <p className="text-[11px] font-semibold tracking-[0.13em] text-green-9 uppercase sm:text-[12px]">
+          {step.eyebrow}
+        </p>
+        <h3 className="mt-3 text-[clamp(28px,3.5vw,46px)] leading-[1.08] font-medium tracking-[-0.04em] text-[#111513]">
+          {step.title}
+        </h3>
+        {index === LAST_STEP && (
+          <div className="mx-auto mt-4 flex w-fit items-center gap-2 border-t border-[#dfe4e1] px-3 pt-4 text-[12px] font-medium text-green-12 sm:text-[14px]">
+            <span className="grid size-7 place-items-center rounded-full bg-green-9 text-white">
+              <Check className="size-3.5" />
+            </span>
+            Buying insurance should leave you informed—not exhausted.
+          </div>
+        )}
       </div>
     </>
   );
 }
 
-/** Short line joining a card to the spine, plus the node it lands on. */
-function Connector({
-  card,
-  y,
-}: {
-  card: Card;
-  y: number;
-}) {
-  const isLeft = card.side === "left";
-  const lineY = isLeft ? y + 128 : y + 142.68;
-  const nodeY = isLeft ? y + 129 : y + 259.05 - 116;
+function CarouselStory({ phase }: { phase: number }) {
+  const introOpacity = 1 - smoothstep(0.35, 0.82, phase);
 
   return (
-    <>
+    <div className="relative h-[100svh] min-h-[640px] overflow-hidden bg-white">
       <div
-        className="absolute h-px w-[39px] origin-center"
+        className="absolute inset-0 z-40 flex flex-col items-center justify-center px-6 text-center"
         style={{
-          left: isLeft ? 260 : SPINE_X,
-          top: lineY,
-          backgroundColor: card.accent,
-          transform: `rotate(${isLeft ? 7.31 : -7.31}deg)`,
+          opacity: introOpacity,
+          transform: `translateY(${phase * -42}px)`,
+          pointerEvents: introOpacity > 0.5 ? "auto" : "none",
         }}
-      />
-      <div
-        className="absolute size-[7px] rounded-full"
-        style={{
-          left: SPINE_X - 3,
-          top: nodeY - 3,
-          backgroundColor: card.accent,
-        }}
-      />
-    </>
+        aria-hidden={introOpacity < 0.5}
+      >
+        <p className="text-[11px] font-semibold tracking-[0.16em] text-green-9 uppercase sm:text-[13px]">
+          Why InTrust exists
+        </p>
+        <h2 className="mt-5 max-w-[1020px] text-[clamp(46px,6vw,82px)] leading-[0.98] font-medium tracking-[-0.055em] text-[#111513]">
+          Buying insurance should leave you{" "}
+          <span className="text-green-9">informed</span>—not exhausted.
+        </h2>
+        <p className="mt-7 max-w-[620px] text-[16px] leading-[1.6] text-[#6a746f] sm:text-[18px]">
+          Scroll to see why the usual buying journey creates more activity than understanding.
+        </p>
+      </div>
+
+      {STEPS.map((step, index) => (
+        <StoryCard key={step.label} index={index} phase={phase} />
+      ))}
+    </div>
+  );
+}
+
+function ReducedMotionStory() {
+  return (
+    <div className="hidden motion-reduce:block">
+      <div className="px-5 py-20 text-center sm:px-10">
+        <p className="text-[11px] font-semibold tracking-[0.16em] text-green-9 uppercase">
+          Why InTrust exists
+        </p>
+        <h2 className="mx-auto mt-5 max-w-[900px] text-[clamp(42px,6vw,72px)] leading-[1] font-medium tracking-[-0.05em] text-[#111513]">
+          Buying insurance should leave you informed—not exhausted.
+        </h2>
+      </div>
+      <div className="space-y-24 px-5 pb-24 sm:px-10">
+        {STEPS.map((step, index) => (
+          <article key={step.label} className="mx-auto max-w-[900px] text-center">
+            <div className="flex h-[390px] items-center justify-center overflow-hidden rounded-[24px] border border-[#e0e5e2] bg-[#fafbfa]">
+              <div className="origin-center scale-[0.6] sm:scale-[0.72]">
+                <Scene index={index} />
+              </div>
+            </div>
+            <p className="mt-8 text-[11px] font-semibold tracking-[0.13em] text-green-9 uppercase">
+              {step.eyebrow}
+            </p>
+            <h3 className="mt-3 text-[clamp(30px,4vw,46px)] leading-[1.08] font-medium tracking-[-0.04em] text-[#111513]">
+              {step.title}
+            </h3>
+          </article>
+        ))}
+      </div>
+    </div>
   );
 }
 
 export function Issues() {
-  const positions = CARDS.map((card, i) => {
-    const pair = Math.floor(i / 2);
-    const y = card.side === "left" ? pair * PAIR_STEP : pair * PAIR_STEP + 116;
-    return y + TOP_PAD;
-  });
-
-  const contentHeight = Math.max(...positions) + 280;
-  /** How far the rail must travel to reveal the last card. */
-  const railTravel = Math.max(0, contentHeight - SCENE_HEIGHT);
-
   const trackRef = useRef<HTMLDivElement>(null);
-  const canvasRef = useRef<HTMLDivElement>(null);
+  const [phase, setPhase] = useState(0);
 
   useEffect(() => {
+    const track = trackRef.current;
+    if (!track) return;
+
+    const reducedMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    );
     let frame = 0;
 
     const update = () => {
       frame = 0;
-      const track = trackRef.current;
-      const canvas = canvasRef.current;
-      if (!track || !canvas) return;
+      if (reducedMotion.matches) {
+        setPhase(0);
+        return;
+      }
 
-      // How far we've scrolled through the pinned stretch, as 0 → 1.
-      const distance = track.offsetHeight - PINNED_HEIGHT;
-      const scrolled = -track.getBoundingClientRect().top;
-      const progress = Math.min(Math.max(scrolled / distance, 0), 1);
-
-      canvas.style.transform = `translate3d(0, ${-progress * railTravel}px, 0)`;
+      const distance = Math.max(track.offsetHeight - window.innerHeight, 1);
+      const value = clamp(-track.getBoundingClientRect().top / distance);
+      setPhase(value * MAX_PHASE);
     };
 
-    const onScroll = () => {
-      if (!frame) frame = requestAnimationFrame(update);
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(update);
     };
 
     update();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
+    window.addEventListener("scroll", schedule, { passive: true });
+    window.addEventListener("resize", schedule);
+    reducedMotion.addEventListener("change", schedule);
+
     return () => {
-      if (frame) cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", onScroll);
-      window.removeEventListener("resize", onScroll);
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", schedule);
+      window.removeEventListener("resize", schedule);
+      reducedMotion.removeEventListener("change", schedule);
     };
-  }, [railTravel]);
+  }, []);
 
   return (
-    <section className="-mb-px w-full border border-rule px-[80px]">
-      <div className="w-full">
-        {/* Tall track: the section stays pinned for as long as the rail needs to travel. */}
-        <div
-          ref={trackRef}
-          className="relative w-full"
-          style={{ height: PINNED_HEIGHT + railTravel }}
-        >
-          <div
-            className="sticky top-0 flex w-full items-start overflow-hidden pt-[80px] pl-[40px]"
-            style={{ height: PINNED_HEIGHT }}
-          >
-            <div className="flex w-[1172.177px] items-start justify-between">
-              <div className="w-[561px] shrink-0">
-                <h2 className="w-[482px] text-[44px] leading-normal font-medium tracking-[-0.88px] text-black">
-                  Most people buy insurance{" "}
-                  <span className="text-green-9">without knowing</span> what
-                  they&apos;re actually buying.
-                </h2>
-              </div>
-
-              {/* Card rail — driven by page scroll, not its own scrollbar. */}
-              <div
-                className="w-[603px] shrink-0 overflow-hidden"
-                style={{
-                  height: SCENE_HEIGHT,
-                  // Dissolve cards at the edges instead of slicing them off.
-                  maskImage: RAIL_MASK,
-                  WebkitMaskImage: RAIL_MASK,
-                }}
-              >
-                <div
-                  ref={canvasRef}
-                  className="relative w-[603px] will-change-transform"
-                  style={{ height: contentHeight }}
-                >
-                  {/* Spine */}
-                  <div
-                    className="absolute top-0 w-px bg-[#e3e3e3]"
-                    style={{ left: SPINE_X, height: contentHeight }}
-                  />
-
-                  {CARDS.map((card, i) => (
-                    <div key={`${card.name}-${i}`}>
-                      <Connector card={card} y={positions[i]} />
-                      {card.side === "left" ? (
-                        <NoteCard card={card} y={positions[i]} />
-                      ) : (
-                        <TestimonialCard card={card} y={positions[i]} />
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
+    <section className="-mb-px w-full border border-rule bg-white">
+      <div
+        ref={trackRef}
+        className="relative w-full motion-reduce:hidden"
+        style={{
+          height: `calc(100svh + ${SCROLL_SEGMENT * MAX_PHASE}px)`,
+        }}
+      >
+        <div className="sticky top-0">
+          <CarouselStory phase={phase} />
         </div>
       </div>
+      <ReducedMotionStory />
     </section>
   );
 }
