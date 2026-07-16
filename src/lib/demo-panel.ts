@@ -51,14 +51,14 @@ export const DEMO_PROFILE: Profile = {
 
 // Family-specific fit + premium for this persona (spouse's past knee surgery,
 // no other pre-existing conditions), reused across the three policy tabs.
+// Individual health cover is GST-exempt in India (Sept 2025 reform), so
+// quotes carry no GST caveat.
 const familyPremium = (
   familyAnnualInr: number,
   perMember: [number, number, number],
-  gstNote: string,
 ) => ({
   familyAnnualInr,
   sumInsuredInr: 1_000_000,
-  gstNote,
   perMember: [
     { relation: "self", ageYears: 53, annualPremiumInr: perMember[0] },
     { relation: "spouse", ageYears: 44, annualPremiumInr: perMember[1] },
@@ -106,11 +106,7 @@ const activOne: UiEvent = {
       ],
       notes: [],
     },
-    indicativePremium: familyPremium(
-      35_881,
-      [15_200, 12_681, 8_000],
-      "excludes GST (18% applies)",
-    ),
+    indicativePremium: familyPremium(35_881, [15_200, 12_681, 8_000]),
   },
 };
 
@@ -171,11 +167,7 @@ const optimaRestore: UiEvent = {
       ],
       notes: [],
     },
-    indicativePremium: familyPremium(
-      42_853,
-      [18_000, 15_353, 9_500],
-      "excludes 18% GST",
-    ),
+    indicativePremium: familyPremium(42_853, [18_000, 15_353, 9_500]),
     coverages: [
       { name: "In-patient hospitalization", limit: "Up to base sum insured" },
       { name: "Restore Benefit (100% refill)", limit: "Once per year" },
@@ -266,11 +258,7 @@ const aspire: UiEvent = {
       ],
       notes: [],
     },
-    indicativePremium: familyPremium(
-      33_988,
-      [14_300, 11_988, 7_700],
-      "excludes 18% GST",
-    ),
+    indicativePremium: familyPremium(33_988, [14_300, 11_988, 7_700]),
     coverages: [
       { name: "In-patient hospitalization", limit: "Up to base sum insured" },
       { name: "Unlimited restoration", limit: "Any number of times/yr" },

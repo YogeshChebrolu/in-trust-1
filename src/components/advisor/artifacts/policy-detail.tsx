@@ -252,7 +252,9 @@ export function PolicyDetailArtifact({ payload: p }: { payload: PolicyDetailPayl
             </p>
             <p className="text-primary-800 text-lg font-semibold tabular-nums">
               ≈{inr(prem.familyAnnualInr)}
-              <span className="text-text-muted text-xs font-normal">/yr · {prem.gstNote}</span>
+              <span className="text-text-muted text-xs font-normal">
+                /yr{prem.gstNote ? ` · ${prem.gstNote}` : ""}
+              </span>
             </p>
           </div>
           {prem.perMember?.length ? (
