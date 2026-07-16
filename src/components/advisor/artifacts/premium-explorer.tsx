@@ -50,7 +50,7 @@ function QuoteRow({ policy: p, color }: { policy: PremiumPolicyPayload; color: s
           <p className="text-text-light text-[11px]">{p.insurer}</p>
         </div>
         <div className="shrink-0 text-right">
-          <p className="text-text-dark text-lg font-bold tabular-nums">
+          <p className="text-text-dark text-lg font-semibold tabular-nums">
             {annual != null ? `≈${inr(annual)}` : "—"}
             <span className="text-text-light text-xs font-normal">/yr</span>
           </p>
@@ -133,6 +133,7 @@ function Chart({ policies }: { policies: PremiumPolicyPayload[] }) {
           </span>
         ))}
       </div>
+      <div className="relative">
       <svg
         ref={svgRef}
         viewBox={`0 0 ${W} ${H}`}
@@ -178,22 +179,39 @@ function Chart({ policies }: { policies: PremiumPolicyPayload[] }) {
           </g>
         ) : null}
       </svg>
+      {/* Floating readout chip — follows the crosshair, flips sides at the middle. */}
       {hoverAge != null ? (
-        <div className="text-text-regular flex flex-wrap items-center gap-x-4 gap-y-0.5 pt-0.5 text-xs tabular-nums">
-          <span className="text-text-muted">age {hoverAge}:</span>
+        <div
+          className="border-border-light pointer-events-none absolute top-1 z-10 rounded-lg border bg-white/95 px-2.5 py-1.5 shadow-[0_6px_20px_-8px_rgba(0,0,0,0.25)] backdrop-blur-sm"
+          style={
+            X(hoverAge) / W <= 0.55
+              ? { left: `calc(${((X(hoverAge) / W) * 100).toFixed(1)}% + 10px)` }
+              : {
+                  left: `calc(${((X(hoverAge) / W) * 100).toFixed(1)}% - 10px)`,
+                  transform: "translateX(-100%)",
+                }
+          }
+        >
+          <p className="text-text-muted text-[10px] font-medium">age {hoverAge}</p>
           {series.map((s) => {
             const p = nearest(s.pts, hoverAge);
             return (
-              <span key={s.name} className="inline-flex items-center gap-1.5">
+              <p
+                key={s.name}
+                className="text-text-dark mt-0.5 flex items-center gap-1.5 text-xs tabular-nums"
+              >
                 <SeriesDot color={s.color} />
-                {s.name.split(" ").slice(0, 2).join(" ")} {inr(p.v)}
-              </span>
+                <span className="text-text-muted max-w-28 truncate">
+                  {s.name.split(" ").slice(0, 2).join(" ")}
+                </span>
+                <span className="font-semibold">{inr(p.v)}</span>
+              </p>
             );
           })}
         </div>
-      ) : (
-        <p className="text-text-light pt-0.5 text-[11px]">hover the chart to compare ages</p>
-      )}
+      ) : null}
+      </div>
+      <p className="text-text-light pt-0.5 text-[11px]">hover the chart to compare ages</p>
     </div>
   );
 }

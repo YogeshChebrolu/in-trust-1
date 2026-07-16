@@ -114,8 +114,8 @@ export function PolicyDetailArtifact({ payload: p }: { payload: PolicyDetailPayl
     <div className="bg-bg-surface border-border-light overflow-hidden rounded-xl border shadow-[0px_2px_8px_rgba(0,0,0,0.08)]">
       {/* header */}
       <div className="border-border-light border-b px-4 py-3">
-        <div className="flex flex-wrap items-start justify-between gap-2">
-          <div>
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
             <p className="text-text-light flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wider">
               <InsurerLogo
                 name={p.insurer?.shortName ?? p.insurer?.name}
@@ -126,12 +126,14 @@ export function PolicyDetailArtifact({ payload: p }: { payload: PolicyDetailPayl
             <h3 className="text-text-dark text-lg font-semibold leading-tight">{p.productName}</h3>
             {e?.tagline ? <p className="text-text-muted mt-0.5 text-sm italic">{e.tagline}</p> : null}
           </div>
-          <div className="text-right">
-            <p className="text-text-light text-[10px]">cover {p.sumInsured?.label}</p>
+          <div className="flex shrink-0 items-center gap-2">
+            <p className="text-text-muted text-[10px] whitespace-nowrap">
+              cover {p.sumInsured?.label}
+            </p>
             {fit?.verdict ? (
               <span
                 className={cn(
-                  "mt-1 inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold",
+                  "inline-block rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap",
                   VERDICT_STYLE[fit.verdict] ?? "bg-bg-secondary text-text-muted",
                 )}
               >
@@ -248,7 +250,7 @@ export function PolicyDetailArtifact({ payload: p }: { payload: PolicyDetailPayl
               Indicative for your family
               {prem.sumInsuredInr ? ` at ₹${Math.round(prem.sumInsuredInr / 100_000)}L each` : ""}
             </p>
-            <p className="text-primary-800 text-lg font-bold tabular-nums">
+            <p className="text-primary-800 text-lg font-semibold tabular-nums">
               ≈{inr(prem.familyAnnualInr)}
               <span className="text-text-muted text-xs font-normal">/yr · {prem.gstNote}</span>
             </p>

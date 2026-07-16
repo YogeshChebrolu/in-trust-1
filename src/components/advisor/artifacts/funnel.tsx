@@ -6,7 +6,7 @@
 // white surface, hairline dividers, soft shadow, forest-green accents.
 
 import { useState } from "react";
-import { ChevronRight, Filter, ShieldAlert, Sparkles } from "lucide-react";
+import { ChevronRight, Filter, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { InsurerLogo } from "../insurer-logo";
 import { inr, type FunnelPayload, type FunnelStagePayload } from "./types";
@@ -178,17 +178,6 @@ export function FunnelArtifact({ payload }: { payload: FunnelPayload }) {
               </li>
             ))}
           </ul>
-        </div>
-      ) : null}
-
-      {payload.flags?.length ? (
-        <div className="border-border-light bg-amber-50/60 border-t px-4 py-2.5">
-          {payload.flags.map((f, i) => (
-            <p key={i} className="flex items-start gap-2 text-xs leading-relaxed text-amber-900">
-              <ShieldAlert className="mt-0.5 size-3.5 shrink-0 text-amber-600" />
-              {f}
-            </p>
-          ))}
         </div>
       ) : null}
 

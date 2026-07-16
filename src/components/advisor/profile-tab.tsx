@@ -4,7 +4,14 @@
 // panel. Landing-page variant of the product's ProfileTabContent: the live app
 // reads this from Convex; here it takes a static profile prop.
 
-import { HeartPulse, MapPin, Shield, Target, Users, Wallet } from "lucide-react";
+import {
+  HeartIcon as HeartPulse,
+  MapPinIcon as MapPin,
+  ShieldCheckIcon as Shield,
+  TargetIcon as Target,
+  UsersIcon as Users,
+  WalletIcon as Wallet,
+} from "./streamline-icons";
 
 export interface ProfileMember {
   relation?: string;

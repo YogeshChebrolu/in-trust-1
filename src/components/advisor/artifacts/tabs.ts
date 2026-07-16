@@ -1,7 +1,14 @@
 // Tab derivation for the artifact panel: one stable tab per renderAs event
 // family, with later events replacing earlier content in place.
 
-import { BadgeCheck, Columns3, Filter, MapPinned, TrendingUp } from "lucide-react";
+import {
+  FilterIcon,
+  GraphUpIcon,
+  MapPinIcon,
+  ScaleIcon,
+  StarBadgeIcon,
+  type StreamlineIcon,
+} from "../streamline-icons";
 import type {
   ComparePayload,
   FunnelPayload,
@@ -11,7 +18,7 @@ import type {
   UiEvent,
 } from "./types";
 
-export type ArtifactIcon = typeof Filter;
+export type ArtifactIcon = StreamlineIcon;
 const DASH = "\u2014";
 const ARROW = "\u2192";
 
@@ -62,28 +69,28 @@ export function tabMeta(e: UiEvent): {
   const payload = e.payload ?? {};
   switch (e.renderAs) {
     case "funnel":
-      return { label: "Shortlist", Icon: Filter };
+      return { label: "Shortlist", Icon: FilterIcon };
     case "policyDetail": {
       const p = payload as PolicyDetailPayload;
       return {
         label: p.productName ?? "Policy",
-        Icon: BadgeCheck,
+        Icon: StarBadgeIcon,
         insurer: p.insurer?.shortName ?? p.insurer?.name,
       };
     }
     case "compare":
-      return { label: "Compare", Icon: Columns3 };
+      return { label: "Compare", Icon: ScaleIcon };
     case "premiumExplorer":
-      return { label: "Premiums", Icon: TrendingUp };
+      return { label: "Premiums", Icon: GraphUpIcon };
     case "hospitalMap": {
       const p = payload as HospitalMapPayload;
       return {
         label: p.center?.label ? `Hospitals: ${p.center.label}` : "Hospitals",
-        Icon: MapPinned,
+        Icon: MapPinIcon,
       };
     }
     default:
-      return { label: e.renderAs ?? "Artifact", Icon: BadgeCheck };
+      return { label: e.renderAs ?? "Artifact", Icon: StarBadgeIcon };
   }
 }
 

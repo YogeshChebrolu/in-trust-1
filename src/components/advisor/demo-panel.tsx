@@ -6,7 +6,7 @@
 // by the caller (page scroll) instead of clicks + Convex.
 
 import { useEffect, useRef } from "react";
-import { UserRound } from "lucide-react";
+import { UserCircleIcon } from "./streamline-icons";
 import { cn } from "@/lib/utils";
 import { InsurerLogo } from "./insurer-logo";
 import { Artifact, type UiEvent } from "./artifacts";
@@ -50,7 +50,7 @@ export function DemoPanel({
       {/* Horizontal tab bar — the panel's only chrome. */}
       <div className="border-border-light flex items-center gap-1 border-b px-2 py-2">
         <div className="no-scrollbar flex flex-1 items-center gap-1 overflow-x-auto">
-          <TabButton label="Profile" Icon={UserRound} active={showProfile} />
+          <TabButton label="Profile" Icon={UserCircleIcon} active={showProfile} />
           {tabs.map((tab) => (
             <TabButton
               key={tab.key}
